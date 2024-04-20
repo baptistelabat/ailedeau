@@ -19,11 +19,25 @@ effective_aspect_ratio = 3.3
 
 foil_surface= 0.55 # m2
 
+# By definition
 drag_coefficient_at_max_finesse = lift_coefficient_at_max_finesse/max_finesse
 
 incidence_of_plan = incidence_plan(effective_aspect_ratio, lift_coefficient_at_max_finesse)
 
-span=sqrt(effective_aspect_ratio*effective_aspect_ratio)
+# By definition
+span=sqrt(effective_aspect_ratio*foil_surface)
 
+fuselage_area = 0.7*foil_surface
+
+stabilizers_surfaces = 0.25*foil_surface*(1-1/effective_aspect_ratio)
+
+stabilizer_drag_coefficient = 0.03
+
+# Induced drag formula
+foil_drag_coefficient_3D=drag_coefficient_at_max_finesse + lift_coefficient_at_max_finesse^2/(np.pi* effective_aspect_ratio)
+
+stabilizer_drag_coefficient_based_on_foil_surface=stabilizer_drag_coefficient*(fuselage_area+stabilizers_surfaces)/foil_surface
+
+total_drag_coefficient_based_on_foil_surface = stabilizer_drag_coefficient_based_on_foil_surface + foil_drag_coefficient_3D+
 
 
