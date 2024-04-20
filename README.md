@@ -23,5 +23,13 @@ Unfortunately, there are little details on the derivation of some formula in the
 The goal is to get to a live version of the simulator than can be used in a web browser.
 
 
+Install
+We use mamba/conda-lock/poetry to get a reproducible environment. The following command should install everything for you.
+make install-mamba
+make create-aildeau
+mamba activate ailedeau
+make install-poetry
+
+
 
 
