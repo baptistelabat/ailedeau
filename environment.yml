@@ -1,0 +1,7 @@
+name: ailedeau
+channels:
+  - conda-forge
+dependencies:
+  - poetry=1.8.2
+  - python=3.12.3
+prefix: /home/perso/conda/envs/ailedeau
