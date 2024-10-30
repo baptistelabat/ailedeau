@@ -24,11 +24,13 @@ The goal is to get to a live version of the simulator than can be used in a web 
 
 
 Install
-We use mamba/conda-lock/poetry to get a reproducible environment. The following command should install everything for you.
-make install-mamba
-make create-aildeau
-mamba activate ailedeau
+We use mamba/conda-lock/poetry to get a reproducible environment. The following command should install everything for you:
+```bash
+make install-mamba  
+make create-ailedeau  
+mamba activate ailedeau  
 make install-poetry
+```
 
 
 
