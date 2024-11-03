@@ -8,6 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.12"
 scipy = "^1.13.0"
+pybullet = "^3.2.6"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.4.0"
