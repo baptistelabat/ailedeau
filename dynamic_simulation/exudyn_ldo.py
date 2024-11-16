@@ -94,13 +94,20 @@ mbs.AddObject(GenericJoint(markerNumbers=[mANCFFirstEnd2, mBody2], constrainedAx
 # === Pulling Load Function ===
 def PullingLoad(mbs, t, itemIndex):
     # Pulling force applied to Body2
-
     return [10, 3, 0]  # Constant pulling force
 
 
-# === Altitude Controller Function with Damping ===
+# Define the integral error variable
+integral_error_x = 0
+integral_error_y = 0
+
+
+# === Altitude Controller Function with Proportional, Integral, and Derivative Control ===
 def AltitudeController(mbs, t, itemIndex):
+    global integral_error_x, integral_error_y  # Use global variables for error accumulation
+
     k_p = 1  # Proportional gain
+    k_i = 0.001  # Integral gain (to accumulate error)
     k_d = 0.2  # Damping gain (adjust for desired damping effect)
 
     # Get position and velocity of the controlled object (Body0)
@@ -112,11 +119,17 @@ def AltitudeController(mbs, t, itemIndex):
     # Proportional control force (based on position)
     force_proportional = [-k_p * x_position, -k_p * y_position, 0]
 
+    # Integral control force (sum of position errors over time)
+    integral_error_x += x_position * h  # Accumulate error over time step (h is the timestep)
+    integral_error_y += y_position * h  # Accumulate error over time step (h is the timestep)
+
+    force_integral = [-k_i * integral_error_x, -k_i * integral_error_y, 0]
+
     # Damping control force (based on velocity)
     force_damping = [-k_d * x_velocity, -k_d * y_velocity, 0]
 
-    # Return the combined control force (proportional + damping)
-    return [force_proportional[i] + force_damping[i] for i in range(3)]
+    # Return the combined control force (proportional + integral + damping)
+    return [force_proportional[i] + force_integral[i] + force_damping[i] for i in range(3)]
 
 
 # Apply pulling load at Body2
@@ -127,11 +140,13 @@ mbs.AddLoad(LoadForceVector(markerNumber=pullMarker, loadVectorUserFunction=Pull
 controlMarker = mbs.AddMarker(MarkerBodyRigid(bodyNumber=dictBody0['bodyNumber'], localPosition=[0, 0, 0]))
 mbs.AddLoad(LoadForceVector(markerNumber=controlMarker, loadVectorUserFunction=AltitudeController))
 
-# Assemble and Solve
+# Assemble and solve the static equilibrium before starting dynamics
 mbs.Assemble()
-simulationSettings = exu.SimulationSettings()
+mbs.SolveStatic()  # Solving for static equilibrium
 
-tEnd = 10
+# Setup for dynamic simulation
+simulationSettings = exu.SimulationSettings()
+tEnd = 50
 h = 2e-3
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd / h)
 simulationSettings.timeIntegration.endTime = tEnd
@@ -146,5 +161,6 @@ simulationSettings.linearSolverType = exu.LinearSolverType.EigenSparse
 
 SC.visualizationSettings.nodes.defaultSize = 0.01
 
+# Solving the dynamic simulation
 mbs.SolveDynamic(simulationSettings)
 mbs.SolutionViewer()
