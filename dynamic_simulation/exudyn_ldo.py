@@ -1,6 +1,7 @@
 import exudyn as exu
 from exudyn.utilities import *  # includes itemInterface and rigidBodyUtilities
-import exudyn.graphics as graphics  # only import if it does not conflict
+import exudyn.graphics as graphics  # for visualization
+import numpy as np
 
 SC = exu.SystemContainer()
 mbs = SC.AddSystem()
@@ -18,7 +19,7 @@ b = 0.001  # width of rectangular cable in m
 h = 0.001  # height of rectangular cable in m
 A = b * h  # cross-sectional area in m^2
 I = b * h**3 / 12  # second moment of area in m^4
-I=I/10 # Cable is more flexible than rod
+I = I / 10  # Cable is more flexible than a rod
 
 # ANCF Cable template
 cableTemplate = Cable2D(
@@ -71,10 +72,6 @@ mANCFFirst1 = mbs.AddMarker(MarkerNodeRigid(nodeNumber=ancf1[0][0]))  # Start of
 mANCFFirstEnd1 = mbs.AddMarker(MarkerNodeRigid(nodeNumber=ancf1[0][-1]))  # End of cable 1
 mBody1 = mbs.AddMarker(MarkerBodyRigid(bodyNumber=dictBody1['bodyNumber'], localPosition=[0, 0, 0]))
 
-# Joint between Ground and Cable 1
-mGround = mbs.AddMarker(MarkerBodyRigid(bodyNumber=oGround, localPosition=[0, 0, 0]))
-# mbs.AddObject(GenericJoint(markerNumbers=[mANCFFirst1, mGround], constrainedAxes=[1, 1, 0, 0, 0, 1]))
-
 # Joint between Cable 1 and Body 1
 mbs.AddObject(GenericJoint(markerNumbers=[mANCFFirstEnd1, mBody1], constrainedAxes=[1, 1, 0, 0, 0, 1]))
 
@@ -88,15 +85,29 @@ mbs.AddObject(GenericJoint(markerNumbers=[mANCFFirst2, mBody1], constrainedAxes=
 
 # Joint between Cable 2 and Body 2
 mbs.AddObject(GenericJoint(markerNumbers=[mANCFFirstEnd2, mBody2], constrainedAxes=[1, 1, 0, 0, 0, 1]))
+# === Pulling Load Function ===
+def PullingLoad(mbs, t, itemIndex):
+    # Pulling force applied to Body2
+    if t < 2:
+        return [0, 0, 0]  # No force at the beginning
+    elif t < 6:
+        return [0*1000 * (t-2), 0, 0]  # Linearly increasing pulling force
+    else:
+        return [0*4000, 0, 0]  # Constant pulling force
 
-# Optional: Apply prescribed motion to Body2
-nGround = mbs.AddNode(NodePointGround(referenceCoordinates=[0, 0, 0]))
-mcGround = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber=nGround, coordinate=0))
-mBody2Phi = mbs.AddMarker(MarkerNodeCoordinate(nodeNumber=dictBody2['nodeNumber'], coordinate=2))
+# === Altitude Controller Function ===
+def AltitudeController(mbs, t, itemIndex):
+    k_p = 10  # Proportional gain
+    y_position = mbs.GetMarkerOutput(controlMarker, exu.OutputVariableType.Position)[1]  # y-coordinate
+    return [0, -k_p * y_position, 0]  # Force proportional to altitude
 
+# Apply pulling load at Body2
+pullMarker = mbs.AddMarker(MarkerBodyRigid(bodyNumber=dictBody2['bodyNumber'], localPosition=[0, 0, 0]))
+# mbs.AddLoad(LoadForceVector(markerNumber=pullMarker, loadVectorUserFunction=PullingLoad))
 
-mbs.AddObject(CoordinateConstraint(markerNumbers=[mcGround, mBody2Phi],
-                                   offset=0.0))
+# Apply altitude control load at Body1
+controlMarker = mbs.AddMarker(MarkerBodyRigid(bodyNumber=dictBody2['bodyNumber'], localPosition=[0, 0, 0]))
+mbs.AddLoad(LoadForceVector(markerNumber=controlMarker, loadVectorUserFunction=AltitudeController))
 
 # Assemble and Solve
 mbs.Assemble()
