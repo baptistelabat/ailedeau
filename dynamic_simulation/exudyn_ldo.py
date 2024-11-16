@@ -56,6 +56,10 @@ ancf2 = GenerateStraightLineANCFCable2D(
 
 # Rigid Body 1 (connected to cable 1 and cable 2)
 gBody = graphics.Brick(size=[h, h, h], color=graphics.color.red)
+dictBody0 = mbs.CreateRigidBody(referencePosition=[0, 0, 0],
+                                inertia=InertiaCuboid(1000, [h, h, h]),
+                                graphicsDataList=[gBody],
+                                create2D=True, returnDict=True)
 dictBody1 = mbs.CreateRigidBody(referencePosition=[L, 0, 0],
                                 inertia=InertiaCuboid(1000, [h, h, h]),
                                 graphicsDataList=[gBody],
@@ -67,13 +71,15 @@ dictBody2 = mbs.CreateRigidBody(referencePosition=[2 * L, 0, 0],
                                 graphicsDataList=[gBody],
                                 create2D=True, returnDict=True)
 
+
 # Connections for Cable 1
 mANCFFirst1 = mbs.AddMarker(MarkerNodeRigid(nodeNumber=ancf1[0][0]))  # Start of cable 1
 mANCFFirstEnd1 = mbs.AddMarker(MarkerNodeRigid(nodeNumber=ancf1[0][-1]))  # End of cable 1
 mBody1 = mbs.AddMarker(MarkerBodyRigid(bodyNumber=dictBody1['bodyNumber'], localPosition=[0, 0, 0]))
-
+mBody0 = mbs.AddMarker(MarkerBodyRigid(bodyNumber=dictBody0['bodyNumber'], localPosition=[0, 0, 0]))
 # Joint between Cable 1 and Body 1
 mbs.AddObject(GenericJoint(markerNumbers=[mANCFFirstEnd1, mBody1], constrainedAxes=[1, 1, 0, 0, 0, 1]))
+mbs.AddObject(GenericJoint(markerNumbers=[mANCFFirst1, mBody0], constrainedAxes=[1, 1, 0, 0, 0, 1]))
 
 # Connections for Cable 2
 mANCFFirst2 = mbs.AddMarker(MarkerNodeRigid(nodeNumber=ancf2[0][0]))  # Start of cable 2
