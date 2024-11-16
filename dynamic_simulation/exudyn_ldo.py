@@ -7,12 +7,12 @@ SC = exu.SystemContainer()
 mbs = SC.AddSystem()
 
 # Background
-background = graphics.CheckerBoard(point=[0, 0, -0.1], size=5)
+background = graphics.CheckerBoard(point=[0, 0, -0.1], size=50)
 oGround = mbs.AddObject(ObjectGround(referencePosition=[0, 0, 0],
                                      visualization=VObjectGround(graphicsData=[background])))
 
 # Cable parameters
-L = 2  # length of each cable segment in m
+L = 20  # length of each cable segment in m
 E = 2e11  # Young's modulus of the cable in N/m^2
 rho = 7800  # density of the cable in kg/m^3
 b = 0.001  # width of rectangular cable in m
@@ -94,25 +94,37 @@ mbs.AddObject(GenericJoint(markerNumbers=[mANCFFirstEnd2, mBody2], constrainedAx
 # === Pulling Load Function ===
 def PullingLoad(mbs, t, itemIndex):
     # Pulling force applied to Body2
-    if t < 2:
-        return [0, 0, 0]  # No force at the beginning
-    elif t < 6:
-        return [0*1000 * (t-2), 0, 0]  # Linearly increasing pulling force
-    else:
-        return [0*4000, 0, 0]  # Constant pulling force
 
-# === Altitude Controller Function ===
+    return [10, 3, 0]  # Constant pulling force
+
+
+# === Altitude Controller Function with Damping ===
 def AltitudeController(mbs, t, itemIndex):
-    k_p = 10  # Proportional gain
+    k_p = 1  # Proportional gain
+    k_d = 0.2  # Damping gain (adjust for desired damping effect)
+
+    # Get position and velocity of the controlled object (Body0)
+    x_position = mbs.GetMarkerOutput(controlMarker, exu.OutputVariableType.Position)[0]  # x-coordinate
     y_position = mbs.GetMarkerOutput(controlMarker, exu.OutputVariableType.Position)[1]  # y-coordinate
-    return [0, -k_p * y_position, 0]  # Force proportional to altitude
+    x_velocity = mbs.GetMarkerOutput(controlMarker, exu.OutputVariableType.Velocity)[0]  # x-velocity
+    y_velocity = mbs.GetMarkerOutput(controlMarker, exu.OutputVariableType.Velocity)[1]  # y-velocity
+
+    # Proportional control force (based on position)
+    force_proportional = [-k_p * x_position, -k_p * y_position, 0]
+
+    # Damping control force (based on velocity)
+    force_damping = [-k_d * x_velocity, -k_d * y_velocity, 0]
+
+    # Return the combined control force (proportional + damping)
+    return [force_proportional[i] + force_damping[i] for i in range(3)]
+
 
 # Apply pulling load at Body2
 pullMarker = mbs.AddMarker(MarkerBodyRigid(bodyNumber=dictBody2['bodyNumber'], localPosition=[0, 0, 0]))
-# mbs.AddLoad(LoadForceVector(markerNumber=pullMarker, loadVectorUserFunction=PullingLoad))
+mbs.AddLoad(LoadForceVector(markerNumber=pullMarker, loadVectorUserFunction=PullingLoad))
 
 # Apply altitude control load at Body1
-controlMarker = mbs.AddMarker(MarkerBodyRigid(bodyNumber=dictBody2['bodyNumber'], localPosition=[0, 0, 0]))
+controlMarker = mbs.AddMarker(MarkerBodyRigid(bodyNumber=dictBody0['bodyNumber'], localPosition=[0, 0, 0]))
 mbs.AddLoad(LoadForceVector(markerNumber=controlMarker, loadVectorUserFunction=AltitudeController))
 
 # Assemble and Solve
