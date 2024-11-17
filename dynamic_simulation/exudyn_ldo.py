@@ -2,6 +2,7 @@ import exudyn as exu
 from exudyn.utilities import *  # includes itemInterface and rigidBodyUtilities
 import exudyn.graphics as graphics  # for visualization
 import numpy as np
+from scipy.special import cosdg, sindg
 
 SC = exu.SystemContainer()
 mbs = SC.AddSystem()
@@ -31,9 +32,12 @@ cableTemplate = Cable2D(
     visualization=VCable2D(drawHeight=h),
 )
 
+initial_angle_deg = 60
+pull = 10
+
 # Cable 1 (connects Ground to Body1)
 positionOfNode0 = [0, 0, 0]  # Start of cable 1
-positionOfNode1 = [L, 0, 0]  # End of cable 1
+positionOfNode1 = [L*sindg(initial_angle_deg), L*cosdg(initial_angle_deg), 0]  # End of cable 1
 numberOfElements = 16
 ancf1 = GenerateStraightLineANCFCable2D(
     mbs,
@@ -44,8 +48,8 @@ ancf1 = GenerateStraightLineANCFCable2D(
 )
 
 # Cable 2 (connects Body1 to Body2)
-positionOfNode2 = [L, 0, 0]  # Start of cable 2
-positionOfNode3 = [2 * L, 0, 0]  # End of cable 2
+positionOfNode2 = [L*sindg(initial_angle_deg), L*cosdg(initial_angle_deg), 0]  # Start of cable 2
+positionOfNode3 = [2*L*sindg(initial_angle_deg), 2*L*cosdg(initial_angle_deg), 0]  # End of cable 2
 ancf2 = GenerateStraightLineANCFCable2D(
     mbs,
     positionOfNode2, positionOfNode3,
@@ -60,13 +64,13 @@ dictBody0 = mbs.CreateRigidBody(referencePosition=[0, 0, 0],
                                 inertia=InertiaCuboid(1000, [h, h, h]),
                                 graphicsDataList=[gBody],
                                 create2D=True, returnDict=True)
-dictBody1 = mbs.CreateRigidBody(referencePosition=[L, 0, 0],
+dictBody1 = mbs.CreateRigidBody(referencePosition=[L*sindg(initial_angle_deg), L*cosdg(initial_angle_deg), 0],
                                 inertia=InertiaCuboid(1000, [h, h, h]),
                                 graphicsDataList=[gBody],
                                 create2D=True, returnDict=True)
 
 # Rigid Body 2 (connected to cable 2)
-dictBody2 = mbs.CreateRigidBody(referencePosition=[2 * L, 0, 0],
+dictBody2 = mbs.CreateRigidBody(referencePosition=[2*L*sindg(initial_angle_deg), 2*L*cosdg(initial_angle_deg), 0],
                                 inertia=InertiaCuboid(1000, [h, h, h]),
                                 graphicsDataList=[gBody],
                                 create2D=True, returnDict=True)
@@ -94,7 +98,7 @@ mbs.AddObject(GenericJoint(markerNumbers=[mANCFFirstEnd2, mBody2], constrainedAx
 # === Pulling Load Function ===
 def PullingLoad(mbs, t, itemIndex):
     # Pulling force applied to Body2
-    return [10, 3, 0]  # Constant pulling force
+    return [pull*sindg(initial_angle_deg), pull*cosdg(initial_angle_deg), 0]  # Constant pulling force
 
 
 # Define the integral error variable
@@ -108,7 +112,7 @@ def AltitudeController(mbs, t, itemIndex):
 
     k_p = 1  # Proportional gain
     k_i = 0.001  # Integral gain (to accumulate error)
-    k_d = 0.2  # Damping gain (adjust for desired damping effect)
+    k_d = 0.5  # Damping gain (adjust for desired damping effect)
 
     # Get position and velocity of the controlled object (Body0)
     x_position = mbs.GetMarkerOutput(controlMarker, exu.OutputVariableType.Position)[0]  # x-coordinate
@@ -129,7 +133,8 @@ def AltitudeController(mbs, t, itemIndex):
     force_damping = [-k_d * x_velocity, -k_d * y_velocity, 0]
 
     # Return the combined control force (proportional + integral + damping)
-    return [force_proportional[i] + force_integral[i] + force_damping[i] for i in range(3)]
+    pid = [force_proportional[i] + force_integral[i] + force_damping[i] for i in range(3)]
+    return np.array(pid) -[pull*sindg(initial_angle_deg), pull*cosdg(initial_angle_deg), 0]
 
 
 # Apply pulling load at Body2
