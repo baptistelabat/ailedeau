@@ -1,0 +1,38 @@
+<mujoco model="cable_system">
+    <compiler angle="radian" inertiafromgeom="true"/>
+    <default>
+        <geom friction="0.8" density="1000"/>
+        <joint armature="0.01" damping="1"/>
+    </default>
+
+    <!-- World Body -->
+    <worldbody>
+        <!-- Ground -->
+        <geom type="plane" size="5 5 0.1" rgba="0.8 0.9 0.8 1"/>
+
+        <!-- Rigid Body 0 -->
+        <body name="body0" pos="0 0 0">
+            <joint name="free0" type="free"/>
+            <geom type="box" size="0.01 0.01 0.01" rgba="1 0 0 1"/>
+        </body>
+
+        <!-- Cable 1 (Segmented Chain) -->
+        <body name="cable1_segment0" pos="0 0 0">
+            <joint name="cable1_joint0" type="hinge" axis="0 1 0"/>
+            <geom type="capsule" size="0.005 0.2" pos="0 0.1 0" rgba="0 0 1 1"/>
+        </body>
+        <!-- Repeat for additional segments of the cable -->
+
+        <!-- Rigid Body 1 -->
+        <body name="body1" pos="0.2 0.2 0">
+            <joint name="free1" type="free"/>
+            <geom type="box" size="0.01 0.01 0.01" rgba="1 0 0 1"/>
+        </body>
+    </worldbody>
+
+    <!-- Actuators -->
+    <!-- Apply a force motor on the joint between the body and cable -->
+    <actuator>
+        <motor name="pull_motor" joint="free1" ctrlrange="-10 10" gear="1" />
+    </actuator>
+</mujoco>
