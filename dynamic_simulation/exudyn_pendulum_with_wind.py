@@ -69,14 +69,14 @@ def WindForce(mbs, t, loadVector):
 
 mbs.CreateForce(
     bodyNumber=b0,
-    localPosition=[0, 0, 0.5 * L],  # Apply at the tip of the second link
+    localPosition=[0.5 * L, 0, 0],  # Apply at the tip of the second link
     loadVector=[0, 0, 0],
     loadVectorUserFunction=WindForce,
     bodyFixed=False
 )
 
 # position sensor at tip of body1
-sens1 = mbs.AddSensor(SensorBody(bodyNumber=b0, localPosition=[0, 0, 0.5 * L],
+sens1 = mbs.AddSensor(SensorBody(bodyNumber=b0, localPosition=[0.5*L, 0, 0],
                                  fileName='solution/sensorPos.txt',
                                  outputVariableType=exu.OutputVariableType.Position))
 
