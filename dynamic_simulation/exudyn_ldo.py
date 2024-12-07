@@ -8,7 +8,7 @@ SC = exu.SystemContainer()
 mbs = SC.AddSystem()
 
 # Background
-background = graphics.CheckerBoard(point=[0, 0, -0.1], size=50)
+background = graphics.CheckerBoard(point=[0, 0, -0.1], size=100)
 oGround = mbs.AddObject(ObjectGround(referencePosition=[0, 0, 0],
                                      visualization=VObjectGround(graphicsData=[background])))
 
@@ -65,7 +65,7 @@ dictBody0 = mbs.CreateRigidBody(referencePosition=[0, 0, 0],
                                 graphicsDataList=[gBody],
                                 create2D=True, returnDict=True)
 dictBody1 = mbs.CreateRigidBody(referencePosition=[L*sindg(initial_angle_deg), L*cosdg(initial_angle_deg), 0],
-                                inertia=InertiaCuboid(1000, [h, h, h]),
+                                inertia=InertiaCuboid(1000, [0.002, 0.017, 0.0025]),
                                 graphicsDataList=[gBody],
                                 create2D=True, returnDict=True)
 
@@ -164,7 +164,7 @@ simulationSettings.timeIntegration.newton.useModifiedNewton = True
 simulationSettings.timeIntegration.newton.relativeTolerance = 1e-6
 simulationSettings.linearSolverType = exu.LinearSolverType.EigenSparse
 
-SC.visualizationSettings.nodes.defaultSize = 0.01
+SC.visualizationSettings.nodes.defaultSize = 0.1
 
 # Solving the dynamic simulation
 mbs.SolveDynamic(simulationSettings)
