@@ -23,7 +23,10 @@ def alpha_beta(v_body:np.array)->Tuple[float, float]:
 
     # Compute the sideslip angle (beta)
     v_b_magnitude = np.sqrt(v_bx ** 2 + v_by ** 2 + v_bz ** 2)
-    beta = np.arcsin(v_by / v_b_magnitude)
+    if v_b_magnitude ==0:
+        beta=0
+    else:
+        beta = np.arcsin(v_by / v_b_magnitude)
     return alpha, beta
 
 def compute_alpha_beta(R_wb:np.array, v_world:np.array)->Tuple[float, float]:
