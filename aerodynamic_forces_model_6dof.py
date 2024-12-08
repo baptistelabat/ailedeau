@@ -2,6 +2,10 @@ from typing import Callable, Dict
 import numpy as np
 
 
+def modulo_neg_pi_to_pi(alpha):
+    alpha = (alpha + np.pi) % 2 * np.pi - np.pi
+    return alpha
+
 class AeroCoefficients:
     """
     Stores dimensionless aerodynamic coefficients and their dependencies for a glider.
@@ -51,40 +55,42 @@ class AeroCoefficients:
     @staticmethod
     def cl_curve(alpha: float) -> float:
         """
-        Lift coefficient curve as a function of angle of attack (alpha, in radians).
-        For small angles of attack, the lift is approximately linear with alpha (2*pi*alpha).
-        For higher angles, the coefficient plateaus at the maximum value.
-        This model assumes an approximate stall behavior for extreme angles.
+        Lift coefficient curve using a sine-based model for smooth transitions across all quadrants.
+        The curve approximates lift behavior for:
+          - Linear region: Lift increases with angle of attack up to stall.
+          - Stall: Lift decreases beyond a critical angle of attack.
+          - Symmetry: Handles negative angles and inverted flight naturally.
+
+        Formula:
+            C_L = C_L_max * sin(2 * alpha)
+        Where:
+            - C_L_max is the maximum lift coefficient.
+            - sin(2 * alpha) models the lift behavior symmetrically over four quadrants.
 
         Reference:
             Anderson, J.D. (2010). *Introduction to Flight*.
         """
-        if alpha < np.radians(-15):
-            return -0.2  # Approximate stall behavior for low alpha
-        elif alpha > np.radians(15):
-            return 1.5  # Approximate maximum lift coefficient (for gliders)
-        else:
-            return 2 * np.pi * alpha  # Linear lift slope for small angles
+        C_L_max = 1.5  # Maximum lift coefficient for gliders
+        return C_L_max * np.sin(2 * alpha)  # Smooth symmetric lift curve
 
     @staticmethod
     def cd_curve(alpha: float) -> float:
         """
-        Drag coefficient curve as a function of angle of attack (alpha, in radians).
-        The total drag coefficient is composed of base drag (parasite drag) and induced drag,
-        which is quadratic in lift coefficient (C_L). For gliders, induced drag is significant at high angles of attack.
+        Drag coefficient curve using a cosine-based model for smooth transitions.
+        The drag increases symmetrically at high angles due to flow separation.
 
         Formula:
-            C_D = C_D0 + k * C_L^2
-            Where:
-                - C_D0 is the zero-lift drag coefficient (typically 0.02 to 0.03 for gliders).
-                - k is a constant that accounts for the induced drag.
+            C_D = C_D_min + k * (1 - cos(2 * alpha))
+        Where:
+            - C_D_min is the minimum drag coefficient (parasite drag).
+            - k scales the induced drag and accounts for high-alpha effects.
 
         Reference:
             Anderson, J.D. (2010). *Introduction to Flight*.
         """
-        base_drag = 0.02  # Zero-lift drag coefficient (gliders have low base drag)
-        induced_drag = 0.05 * alpha ** 2  # Induced drag (quadratic dependence on C_L)
-        return base_drag + induced_drag
+        C_D_min = 0.02  # Minimum drag coefficient (parasite drag)
+        k = 1.0  # Scaling factor for induced drag
+        return C_D_min + k * (1 - np.cos(2 * alpha))  # Smooth symmetric drag curve
 
     def to_dict(self) -> Dict[str, float]:
         """
@@ -131,7 +137,8 @@ class AircraftAerodynamics:
             alpha: float,
             beta: float,
             ang_vel: Dict[str, float],
-            control_surfaces: Dict[str, float]
+            control_surfaces: Dict[str, float],
+            angle_of_key
     ) -> Dict[str, np.ndarray]:
         """
         Compute aerodynamic forces and moments, including both translational and rotational effects.
@@ -149,8 +156,8 @@ class AircraftAerodynamics:
         q = 0.5 * rho * velocity ** 2  # Dynamic pressure
 
         # Translational forces:
-        C_L = self.coeffs.C_L(alpha)
-        C_D = self.coeffs.C_D(alpha)
+        C_L = self.coeffs.C_L(alpha+ angle_of_key)
+        C_D = self.coeffs.C_D(alpha+angle_of_key)
         C_Y = self.coeffs.C_Y_beta * beta
 
         F_x = -q * self.S * C_D  # Drag force
@@ -159,7 +166,7 @@ class AircraftAerodynamics:
 
         # Rotational contributions (moments):
         C_l = self.coeffs.C_l_beta * beta + self.coeffs.C_l_aileron * control_surfaces.get("aileron", 0.0)
-        C_m = self.coeffs.C_m_alpha * alpha + self.coeffs.C_m_q * self.c / (2 * velocity) * ang_vel["q"]
+        C_m = self.coeffs.C_m_alpha * (alpha+angle_of_key) + self.coeffs.C_m_q * self.c / (2 * velocity) * ang_vel["q"]
         C_n = self.coeffs.C_n_beta * beta + self.coeffs.C_n_rudder * control_surfaces.get("rudder", 0.0)
 
         # Moments (torques) in body axes:
@@ -200,7 +207,7 @@ if __name__ == "__main__":
 
     # Compute forces and moments
     forces_moments = aero_model.compute_forces_and_moments(rho, velocity, alpha, beta, angular_velocities,
-                                                           control_inputs)
+                                                           control_inputs, angle_of_key=0)
 
     # Display results
     print("Aerodynamic Forces and Moments:")

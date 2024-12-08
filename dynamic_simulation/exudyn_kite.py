@@ -13,6 +13,7 @@
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 import exudyn as exu
+from exudyn.rigidBodyUtilities import RotXYZ2RotationMatrix
 from exudyn.utilities import InertiaCuboid, SensorBody
 # to be sure to have all items and functions imported, just do:
 # from exudyn.utilities import * #includes itemInterface and rigidBodyUtilities
@@ -20,19 +21,19 @@ import exudyn.graphics as graphics  # only import if it does not conflict
 import numpy as np
 
 from aerodynamic_forces_model_6dof import AeroCoefficients, AircraftAerodynamics
-from compute_alpha_beta import compute_alpha_beta
+from compute_alpha_beta import compute_alpha_beta, alpha_beta
 
 SC = exu.SystemContainer()
 mbs = SC.AddSystem()
 
 # %%++++++++++++++++++++++++++++++++++++++++++++++++++++
 # physical parameters
-g = [0, -9.81, 0]  # gravity
-L = 1  # length
-w = 0.1  # width
-bodyDim = [w, L, w]  # body dimensions
+g = [0, 0, 9.81]  # gravity (aeronautic convention, z down)
+L = 24  # length
+w = 0.001  # width
+bodyDim = [w, w, L]  # body dimensions
 p0 = [0, 0, 0]  # origin of pendulum
-pMid0 = np.array([0, -L*0.5, 0])  # center of mass, body0
+pMid0 = np.array([0, 0, -L*0.5])  # center of mass, body0
 
 # ground body, located at specific position (there could be several ground objects)
 oGround = mbs.CreateGround(referencePosition=[0, 0, 0])
@@ -40,10 +41,10 @@ oGround = mbs.CreateGround(referencePosition=[0, 0, 0])
 # %%++++++++++++++++++++++++++++++++++++++++++++++++++++
 # first link:
 iCube0 = InertiaCuboid(density=5000, sideLengths=bodyDim)
-iCube0 = iCube0.Translated([0, 0.25*L, 0])  # transform COM, COM not at reference point!
+iCube0 = iCube0.Translated([0, 0, -L*0.5])  # transform COM, COM not at reference point!
 
 # graphics for body
-graphicsBody0 = graphics.Brick(centerPoint=[0, 0, 0], size=[0.1*w, L, 0.1*w], color=graphics.color.red)
+graphicsBody0 = graphics.Brick(centerPoint=[0, 0, 0], size=[30*w, 30*w , L ], color=graphics.color.red)
 graphicsCOM0 = graphics.Basis(origin=iCube0.com, length=2 * w)  # COM frame
 
 # create rigid node and body
@@ -54,30 +55,56 @@ b0 = mbs.CreateRigidBody(inertia=iCube0,  # includes COM
 # revolute joint (free z-axis), axis and position given in global coordinates
 #  using reference configuration
 mbs.CreateRevoluteJoint(bodyNumbers=[oGround, b0], position=[0, 0, 0],
-                        axis=[0, 0, 1], axisRadius=0.2 * w, axisLength=1.4 * w)
+                        axis=[0, 1, 0], axisRadius=0.2 * w, axisLength=1.4 * w)
+# create rigid node and kite body
 
+chord = 2
+span = 5
+thickness=0.0001
+angle_of_key= -np.radians(10)
+kiteDim = [chord, span, thickness]  # body dimensions
+iCubeKite = InertiaCuboid(density=5000, sideLengths=bodyDim)
+graphicsKite = graphics.Brick(centerPoint=[0, 0, 0], size=[chord, span, thickness], color=graphics.color.blue)
+graphicsCOMKite = graphics.Basis(origin=iCubeKite.com, length=span)  # COM frame
+b1 = mbs.CreateRigidBody(inertia=iCube0,  # includes COM
+                         referencePosition=[0, 0, -L],
+                         referenceRotationMatrix=RotXYZ2RotationMatrix([0,angle_of_key, 0] ),
+                         gravity=g,
+                         graphicsDataList=[graphicsCOMKite, graphicsKite])
 
+mbs.CreateGenericJoint(bodyNumbers=[b0, b1], position=[0, 0, L],)
+
+rho = 1.2  # Water density in kg/m^3
+wind_velocity = np.array([-20, 0, 0])  # Wind speed in m/s
 
 #%% Add Wind Force
 def WindForce(mbs, t, loadVector):
-    rho = 1000 # Water density in kg/m^3
-    body_velocity = mbs.GetObjectOutputBody(b0, localPosition=[0, -0.5*L, 0],
+
+    body_velocity_in_world = mbs.GetObjectOutputBody(b1, localPosition=[0, 0, 0],
                             variableType=exu.OutputVariableType.Velocity)
-    wind_velocity = np.array([5, 0, 0])  # Wind speed in m/s
-    body_fluid_velocity = body_velocity-wind_velocity
 
-    rotation_matrix = np.reshape(mbs.GetObjectOutputBody(b0, localPosition=[0, -0.5*L, 0],
-                            variableType=exu.OutputVariableType.RotationMatrix), [3,3])
+    body_fluid_velocity = body_velocity_in_world-wind_velocity
 
-    angular_velocity = mbs.GetObjectOutputBody(b0, localPosition=[0, -0.5*L, 0],
+    rotation_matrix = np.reshape(mbs.GetObjectOutputBody(b1, localPosition=[0, 0, 0],
+                            variableType=exu.OutputVariableType.RotationMatrix), [3, 3])
+
+    angular_velocity = mbs.GetObjectOutputBody(1, localPosition=[0, 0, 0],
                             variableType=exu.OutputVariableType.AngularVelocityLocal)
 
-    alpha, beta = compute_alpha_beta(R_wb = rotation_matrix, v_world = -body_fluid_velocity)
+    body_velocity_in_body = mbs.GetObjectOutputBody(b1, localPosition=[0, 0, 0],
+                                                     variableType=exu.OutputVariableType.VelocityLocal)
+
+    alpha, beta = compute_alpha_beta(R_wb = rotation_matrix.T, v_world = body_fluid_velocity)
+
+    # alpha, beta = alpha_beta(v_body=body_velocity_in_body)
+    if t>3:
+        alpha=alpha
+
 
     # Reference dimensions
-    ref_area = 0.2  # m^2
-    ref_chord = 0.2  # m
-    ref_span = 1.0  # m
+    ref_area = chord*span  # m^2
+    ref_chord = chord  # m
+    ref_span = span  # m
 
     # Coefficients
     aero_coeffs = AeroCoefficients()
@@ -92,25 +119,47 @@ def WindForce(mbs, t, loadVector):
     # Compute forces and moments
     forces_moments = aero_model.compute_forces_and_moments(rho=rho,
                                                            velocity=np.linalg.norm(body_fluid_velocity, 2),
-                                                           alpha=alpha + np.radians(10),
+                                                           alpha=alpha-angle_of_key,
                                                            beta=beta,
                                                            ang_vel=angular_velocities,
-                                                           control_surfaces=control_inputs)
+                                                           control_surfaces=control_inputs,
+                                                           angle_of_key = -np.radians(10))
+
+
+
+    force_in_windaero_frame =  np.array( [forces_moments['F_x'], forces_moments['F_y'], forces_moments['F_z']])
+    # rotate from wind frame to body frame
+
+    force_fsd_body_frame = np.squeeze(np.matmul(RotXYZ2RotationMatrix([0, alpha, beta]).T, np.reshape(force_in_windaero_frame, (3, 1))))
+
+
+    return force_fsd_body_frame
+
+def drag_force(mbs, t, loadVector):
+    body_velocity = mbs.GetObjectOutputBody(b0, localPosition=[0, -0.5*L, 0],
+                            variableType=exu.OutputVariableType.Velocity)
+
+    body_fluid_velocity = body_velocity-wind_velocity
 
     drag_coefficient = 0.5
     area = w * L  # Approximate frontal area
 
     force = -0.5 * drag_coefficient * rho * np.linalg.norm(body_fluid_velocity, 2)* area * body_fluid_velocity
-
-    force = 0.*force + 1*np.array( [-forces_moments['F_x'], -forces_moments['F_y'],forces_moments['F_z']])
-    return force  # Wind force acts in the global X direction
+    return force
 
 mbs.CreateForce(
-    bodyNumber=b0,
-    localPosition=[0, -0.5*L, 0],  # Apply at the tip of the second link
+    bodyNumber=b1,
+    localPosition=[0, 0, 0],  # Apply at the tip of the second link
     loadVector=[0, 0, 0],
     loadVectorUserFunction=WindForce,
     bodyFixed=True
+)
+mbs.CreateForce(
+    bodyNumber=b0,
+    localPosition=[0, 0, -0.5*L],  # Apply at the tip of the second link
+    loadVector=[0, 0, 0],
+    loadVectorUserFunction=drag_force,
+    bodyFixed=False
 )
 
 # position sensor at tip of body1
@@ -126,8 +175,8 @@ mbs.ComputeSystemDegreeOfFreedom(verbose=True)  # print out DOF and further info
 
 simulationSettings = exu.SimulationSettings()  # takes currently set values or default values
 
-tEnd = 10  # simulation time
-h = 1e-3  # step size
+tEnd = 3  # simulation time
+h = 0.01  # step size
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd / h)
 simulationSettings.timeIntegration.endTime = tEnd
 simulationSettings.timeIntegration.verboseMode = 1
@@ -135,6 +184,7 @@ simulationSettings.solutionSettings.solutionWritePeriod = 0.01  # store every 10
 
 SC.visualizationSettings.window.renderWindowSize = [1600, 1200]
 SC.visualizationSettings.openGL.multiSampling = 4
+SC.visualizationSettings.openGL.initialModelRotation = RotXYZ2RotationMatrix([np.pi/2, 0, np.pi])
 
 SC.visualizationSettings.nodes.showBasis = True
 
