@@ -19,16 +19,25 @@ https://docs.google.com/spreadsheets/d/12voMISq12KGp8djZCUUUPkHIgdLkBO8MEXWyJg5w
 
 The next step is to understand the different formula and to code them in a proper programming language.
 Unfortunately, there are little details on the derivation of some formula in the reference paper.
+And this approach was stopped for now
 
 The goal is to get to a live version of the simulator than can be used in a web browser.
 
+A dynamic simulator is also developed.
 
-Install
+
+## Install
 We use mamba/conda-lock/poetry to get a reproducible environment. The following command should install everything for you.
 make install-mamba
 make create-aildeau
 mamba activate ailedeau
 make install-poetry
+
+
+## Developer guidelines
+Google docstring are used
+Please use typing
+Please try to get a maximal code coverage, first by deleting unused code
 
 
 
