@@ -35,7 +35,7 @@ class AeroCoefficients:
         self.C_l_beta: float = 0.1  # Rolling moment coefficient due to beta
         self.C_l_aileron: float = 0.05  # Rolling moment coefficient due to aileron deflection
         self.C_n_beta: float = -0.02  # Yawing moment coefficient due to beta
-        self.C_n_rudder: float = 0.03  # Yawing moment coefficient due to rudder deflection
+        self.C_n_rudder: float = 0.003  # Yawing moment coefficient due to rudder deflection
 
         # Additional rotational moment coefficients for roll, pitch, and yaw damping:
         self.C_l_p: float = -0.1  # Rolling moment coefficient due to roll rate
