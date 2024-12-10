@@ -19,9 +19,11 @@ https://docs.google.com/spreadsheets/d/12voMISq12KGp8djZCUUUPkHIgdLkBO8MEXWyJg5w
 
 The next step is to understand the different formula and to code them in a proper programming language.
 Unfortunately, there are little details on the derivation of some formula in the reference paper.
+And this approach was stopped for now
 
 The goal is to get to a live version of the simulator than can be used in a web browser.
 
+A dynamic simulator is also developed.
 
 ## 🛠️ Installation
 You can download the code directly from GitHub or using git:
