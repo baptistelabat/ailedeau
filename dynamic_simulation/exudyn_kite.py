@@ -11,6 +11,7 @@
 # Copyright:This file is part of Exudyn. Exudyn is free software. You can redistribute it and/or modify it under the terms of the Exudyn license. See 'LICENSE.txt' for more details.
 #
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+from typing import Tuple
 
 import exudyn as exu
 from exudyn.rigidBodyUtilities import RotXYZ2RotationMatrix
@@ -31,85 +32,102 @@ mbs = SC.AddSystem()
 # %%++++++++++++++++++++++++++++++++++++++++++++++++++++
 # physical parameters
 g = [0, 0, 9.81]  # gravity (aeronautic convention, z down)
-L = 24  # length
-w = 0.001  # width
-bodyDim = [w, w, L]  # body dimensions
-p0 = [0, 0, 0]  # origin of pendulum
-pMid0 = np.array([0, 0, -L*0.5])  # center of mass, body0
+up = -1
+
+# environmental parameters
+rho = 1.2  # Water density in kg/m^3
+wind_air_ground_velocity_in_world = np.array([-20, 0, 0])  # Wind speed in m/s
+
 
 # ground body, located at specific position (there could be several ground objects)
 oGround = mbs.CreateGround(referencePosition=[0, 0, 0])
 
+anchor_point = [0, 0, 0]  # kite attachment point
+line_length = 24  # length
+w = 0.001  # width
+line_density = 5000
+line_mass = line_length * w ** 2 * line_density
+bodyDim = [w, w, line_length]  # body dimensions
+mid_line_point = anchor_point + np.array([0, 0, line_length * 0.5 * up])  # center of mass, body0
 # %%++++++++++++++++++++++++++++++++++++++++++++++++++++
 # first link:
-iCube0 = InertiaCuboid(density=5000, sideLengths=bodyDim)
-iCube0 = iCube0.Translated([0, 0, -L*0.5])  # transform COM, COM not at reference point!
+iCube0 = InertiaCuboid(density=line_density, sideLengths=bodyDim)
+iCube0 = iCube0.Translated(mid_line_point)  # transform COM, COM not at reference point!
 
 # graphics for body
-graphicsBody0 = graphics.Brick(centerPoint=[0, 0, 0], size=[30*w, 30*w , L ], color=graphics.color.red)
-graphicsCOM0 = graphics.Basis(origin=iCube0.com, length=2 * w)  # COM frame
+magnifying_factor = 30
+graphicsBody0 = graphics.Brick(centerPoint=[0, 0, 0], size=[magnifying_factor * w, magnifying_factor * w , line_length], color=graphics.color.red)
+graphicsCOM0 = graphics.Basis(origin=iCube0.com, length=2*magnifying_factor* w)  # COM frame
 
 # create rigid node and body
-b0 = mbs.CreateRigidBody(inertia=iCube0,  # includes COM
-                         referencePosition=pMid0,
-                         gravity=g,
-                         graphicsDataList=[graphicsCOM0, graphicsBody0])
-# revolute joint (free z-axis), axis and position given in global coordinates
-#  using reference configuration
+line_body = mbs.CreateRigidBody(inertia=iCube0,  # includes COM
+                                referencePosition=mid_line_point,
+                                gravity=g,
+                                graphicsDataList=[graphicsCOM0, graphicsBody0])
+
 if CONSTRAIN_TO_2D:
-    mbs.CreateRevoluteJoint(bodyNumbers=[oGround, b0], position=[0, 0, 0],
-                            axis=[0, 1, 0], axisRadius=0.2 * w, axisLength=1.4 * w)
+    y_axis = [0, 1, 0]
+    mbs.CreateRevoluteJoint(bodyNumbers=[oGround, line_body], position=anchor_point,
+                            axis= y_axis, axisRadius=0.2 * magnifying_factor* w, axisLength=1.4 *magnifying_factor* w)
 else:
-    mbs.CreateSphericalJoint(bodyNumbers=[oGround, b0], position=[0, 0, 0])
+    mbs.CreateSphericalJoint(bodyNumbers=[oGround, line_body], position=anchor_point)
 
 # create rigid node and kite body
-chord = 2
-span = 5
-thickness=0.0001
-angle_of_key= -np.radians(10)
-kiteDim = [chord, span, thickness]  # body dimensions
-iCubeKite = InertiaCuboid(density=5000, sideLengths=bodyDim)
-graphicsKite = graphics.Brick(centerPoint=[0, 0, 0], size=[chord, span, thickness], color=graphics.color.blue)
-graphicsCOMKite = graphics.Basis(origin=iCubeKite.com, length=span)  # COM frame
-b1 = mbs.CreateRigidBody(inertia=iCube0,  # includes COM
-                         referencePosition=[0, 0, -L],
-                         referenceRotationMatrix=RotXYZ2RotationMatrix([0,angle_of_key, 0] ),
-                         gravity=g,
-                         graphicsDataList=[graphicsCOMKite, graphicsKite])
+kite_chord = 2 # m
+kite_span = 5 # m
+kite_mass = 5 # kg
+thickness = 0.0001 # m
+kite_density = kite_mass / (kite_chord * kite_span * thickness)
+angle_of_key = -np.radians(10) # This is needed for a kite, otherwise it would stall and fly backward to the ground
+kite_dim = [kite_chord, kite_span, thickness]  # body dimensions
+iCubeKite = InertiaCuboid(density=kite_density, sideLengths=bodyDim)
+graphicsKite = graphics.Brick(centerPoint=[0, 0, 0], size=kite_dim, color=graphics.color.blue)
+graphicsCOMKite = graphics.Basis(origin=iCubeKite.com, length=kite_span)  # COM frame
+kite_body = mbs.CreateRigidBody(inertia=iCube0,  # includes COM
+                                referencePosition=[0, 0, line_length*up],
+                                referenceRotationMatrix=RotXYZ2RotationMatrix([0, angle_of_key, 0] ),
+                                gravity=g,
+                                graphicsDataList=[graphicsCOMKite, graphicsKite])
 
-mbs.CreateGenericJoint(bodyNumbers=[b0, b1], position=[0, 0, L],)
-
-rho = 1.2  # Water density in kg/m^3
-wind_velocity = np.array([-20, 0, 0])  # Wind speed in m/s
+mbs.CreateGenericJoint(bodyNumbers=[line_body, kite_body], position=[0, 0, line_length * up], )
 
 #%% Add Wind Force
-def WindWrench(mbs, t, loadVector):
+def wind_wrench(mbs, t:float, loadVector) -> Tuple[np.array, np.array]:
+    """
+    Compute the aerodynamic force wrench
+    x forward
+    y to starboard
+    z down
 
-    body_velocity_in_world = mbs.GetObjectOutputBody(b1, localPosition=[0, 0, 0],
-                            variableType=exu.OutputVariableType.Velocity)
+    Args:
+        mbs: multi-body system
+        t (float): time, unused, kept to match interface
+        loadVector (np.array): unused, to be kept to match interface
 
-    body_fluid_velocity = body_velocity_in_world-wind_velocity
+    Returns:
+        Tuple[np.array, np.array]: vector Fx, Fy, Fz and Mx, My, Mz in aerodynamic convention in body frame
+    """
 
-    rotation_matrix = np.reshape(mbs.GetObjectOutputBody(b1, localPosition=[0, 0, 0],
-                            variableType=exu.OutputVariableType.RotationMatrix), [3, 3])
+    body_velocity_in_world = mbs.GetObjectOutputBody(kite_body, localPosition=[0, 0, 0],
+                                                     variableType=exu.OutputVariableType.Velocity)
 
+    body_fluid_velocity_in_world = body_velocity_in_world - wind_air_ground_velocity_in_world
+
+    # Get rotation matrix
+    rotation_matrix = np.reshape(mbs.GetObjectOutputBody(kite_body, localPosition=[0, 0, 0],
+                                                         variableType=exu.OutputVariableType.RotationMatrix), [3, 3])
+
+    # Get angular velocity, which play an important role in damping motion
     angular_velocity = mbs.GetObjectOutputBody(1, localPosition=[0, 0, 0],
                             variableType=exu.OutputVariableType.AngularVelocityLocal)
 
-    body_velocity_in_body = mbs.GetObjectOutputBody(b1, localPosition=[0, 0, 0],
-                                                     variableType=exu.OutputVariableType.VelocityLocal)
 
-    alpha, beta = compute_alpha_beta(R_wb = rotation_matrix.T, v_world = body_fluid_velocity)
+    alpha, beta = compute_alpha_beta(R_wb = rotation_matrix.T, v_world = body_fluid_velocity_in_world)
 
-    # alpha, beta = alpha_beta(v_body=body_velocity_in_body)
-    if t>3:
-        alpha=alpha
-
-
-    # Reference dimensions
-    ref_area = chord*span  # m^2
-    ref_chord = chord  # m
-    ref_span = span  # m
+    # Reference dimensions used to compute go from dimensionless to dimesionful quantities
+    ref_area = kite_chord * kite_span  # m^2
+    ref_chord = kite_chord  # m
+    ref_span = kite_span  # m
 
     # Coefficients
     aero_coeffs = AeroCoefficients()
@@ -119,16 +137,15 @@ def WindWrench(mbs, t, loadVector):
 
     # Example conditions
     angular_velocities = {"p": angular_velocity[0], "q": angular_velocity[1], "r": angular_velocity[2]}  # rad/s
-    control_inputs = {"aileron": 0.0, "rudder": 0.1}  # rad
+    control_inputs = {"aileron": 0.0, "rudder": 0.0}  # rad
 
     # Compute forces and moments
     forces_moments = aero_model.compute_forces_and_moments(rho=rho,
-                                                           velocity=np.linalg.norm(body_fluid_velocity, 2),
-                                                           alpha=alpha-angle_of_key,
+                                                           velocity=np.linalg.norm(body_fluid_velocity_in_world, 2),
+                                                           alpha=alpha,
                                                            beta=beta,
                                                            ang_vel=angular_velocities,
-                                                           control_surfaces=control_inputs,
-                                                           angle_of_key = -np.radians(10))
+                                                           control_surfaces=control_inputs)
 
 
 
@@ -142,49 +159,91 @@ def WindWrench(mbs, t, loadVector):
 
     return force_fsd_body_frame, torque_fsd_body_frame
 
-def WindForce(mbs, t, loadVector):
-    force, torque = WindWrench(mbs, t, loadVector)
+def wind_force(mbs, t:float, loadVector:np.array)->np.array:
+    """
+    Compute the aerodynamic force vector
+    x forward
+    y to starboard
+    z down
+
+    Args:
+        mbs: multi-body system
+        t (float): time, unused, kept to match interface
+        loadVector (np.array): unused, to be kept to match interface
+
+    Returns:
+        np.array: vector Fx, Fy, Fz in aerodynamic convention in body frame
+    """
+    force, torque = wind_wrench(mbs, t, loadVector)
     return force
-def WindTorque(mbs, t, loadVector):
-    force, torque = WindWrench(mbs, t, loadVector)
+
+def wind_torque(mbs, t:float, loadVector:np.array)->np.array:
+    """
+    Compute the aerodynamic torque vector
+    x forward
+    y to starboard
+    z down
+
+    Args:
+        mbs: multi-body system
+        t (float): time, unused, kept to match interface
+        loadVector (np.array): unused, to be kept to match interface
+
+    Returns:
+        np.array: vector Mx, My, Mz in aerodynamic convention in body frame
+    """
+    force, torque = wind_wrench(mbs, t, loadVector)
     return torque
 
 
-def drag_force(mbs, t, loadVector):
-    body_velocity = mbs.GetObjectOutputBody(b0, localPosition=[0, -0.5*L, 0],
-                            variableType=exu.OutputVariableType.Velocity)
+def drag_force(mbs, t:float, loadVector:np.array)->np.array:
+    """
+    Compute the aerodynamic drag of the line (single point model)
+    x forward
+    y to starboard
+    z down
 
-    body_fluid_velocity = body_velocity-wind_velocity
+    Args:
+        mbs: multi-body system
+        t (float): time, unused, kept to match interface
+        loadVector (np.array): unused, to be kept to match interface
+
+    Returns:
+        np.array: vector Fx, Fy, Fz in aerodynamic convention in world frame
+    """
+    body_velocity_in_world = mbs.GetObjectOutputBody(line_body, localPosition=mid_line_point,
+                                                     variableType=exu.OutputVariableType.Velocity)
+
+    body_fluid_velocity = body_velocity_in_world - wind_air_ground_velocity_in_world
 
     drag_coefficient = 0.5
-    area = w * L  # Approximate frontal area
+    area = w * line_length  # Approximate frontal area
 
-    force = -0.5 * drag_coefficient * rho * np.linalg.norm(body_fluid_velocity, 2)* area * body_fluid_velocity
+    force = -0.5 *rho *area * drag_coefficient  * np.linalg.norm(body_fluid_velocity, 2) * body_fluid_velocity
     return force
 
 mbs.CreateForce(
-    bodyNumber=b1,
-    localPosition=[0, 0, 0],  # Apply at the tip of the second link
-    loadVectorUserFunction=WindForce,
+    bodyNumber=kite_body,
+    localPosition=[0, 0, 0],
+    loadVectorUserFunction=wind_force,
     bodyFixed=True
 )
 mbs.CreateTorque(
-    bodyNumber=b1,
-    localPosition=[0, 0, 0],  # Apply at the tip of the second link
-    loadVectorUserFunction=WindTorque,
+    bodyNumber=kite_body,
+    localPosition=[0, 0, 0],
+    loadVectorUserFunction=wind_torque,
     bodyFixed=True
 )
 mbs.CreateForce(
-    bodyNumber=b0,
-    localPosition=[0, 0, -0.5*L],  # Apply at the tip of the second link
-    loadVector=[0, 0, 0],
+    bodyNumber=line_body,
+    localPosition=mid_line_point,
     loadVectorUserFunction=drag_force,
     bodyFixed=False
 )
 
 
-# position sensor at tip of body1
-sens1 = mbs.AddSensor(SensorBody(bodyNumber=b0, localPosition=[0, 0, 0.5 * L],
+# position sensor on line
+sens1 = mbs.AddSensor(SensorBody(bodyNumber=line_body, localPosition=mid_line_point,
                                  fileName='solution/sensorPos.txt',
                                  outputVariableType=exu.OutputVariableType.Position))
 
@@ -196,8 +255,8 @@ mbs.ComputeSystemDegreeOfFreedom(verbose=True)  # print out DOF and further info
 
 simulationSettings = exu.SimulationSettings()  # takes currently set values or default values
 
-tEnd = 30  # simulation time
-h = 0.01  # step size
+tEnd = 10  # simulation time
+h = 0.1  # step size
 simulationSettings.timeIntegration.numberOfSteps = int(tEnd / h)
 simulationSettings.timeIntegration.endTime = tEnd
 simulationSettings.timeIntegration.verboseMode = 1
