@@ -10,8 +10,10 @@ class AeroCoefficients:
     """
     Stores dimensionless aerodynamic coefficients and their dependencies for a glider.
 
-    These coefficients are used to compute aerodynamic forces and moments, including both translational and rotational effects.
-    The coefficients here are typical for gliders, but specific values can vary depending on the design and aerodynamic properties of the aircraft.
+    These coefficients are used to compute aerodynamic forces and moments, including both translational
+    and rotational effects.
+    The coefficients here are typical for gliders, but specific values can vary depending on the design
+    and aerodynamic properties of the aircraft.
 
     Reference books:
         - Anderson, J.D. (2010). *Introduction to Flight*. McGraw-Hill Education.
@@ -19,9 +21,10 @@ class AeroCoefficients:
     """
 
     def __init__(self):
+
         # Translational force coefficients:
-        self.C_L: Callable[[float], float] = self.cl_curve
-        self.C_D: Callable[[float], float] = self.cd_curve
+        self.C_L: Callable[[float], float] = self.cl_curve # positive for positive alpha
+        self.C_D: Callable[[float], float] = self.cd_curve # always positive
         self.C_Y_beta: float = -0.1  # Side force coefficient slope (per radian of beta)
 
         # Rotational force derivatives:
@@ -69,6 +72,12 @@ class AeroCoefficients:
 
         Reference:
             Anderson, J.D. (2010). *Introduction to Flight*.
+
+        Args:
+            alpha: angle of attack [radians]
+
+        Returns:
+            float: lift coefficient at angle of attack [-]
         """
         C_L_max = 1.5  # Maximum lift coefficient for gliders
         return C_L_max * np.sin(2 * alpha)  # Smooth symmetric lift curve
@@ -87,6 +96,12 @@ class AeroCoefficients:
 
         Reference:
             Anderson, J.D. (2010). *Introduction to Flight*.
+
+        Args:
+            alpha: angle of attack [radians]
+
+        Returns:
+            float: drag coefficient at angle of attack [-]. Always positive
         """
         C_D_min = 0.02  # Minimum drag coefficient (parasite drag)
         k = 1.0  # Scaling factor for induced drag
@@ -137,15 +152,14 @@ class AircraftAerodynamics:
             alpha: float,
             beta: float,
             ang_vel: Dict[str, float],
-            control_surfaces: Dict[str, float],
-            angle_of_key
+            control_surfaces: Dict[str, float]
     ) -> Dict[str, np.ndarray]:
         """
         Compute aerodynamic forces and moments, including both translational and rotational effects.
 
         Parameters:
-            - rho: Air density (kg/m^3)
-            - velocity: Airspeed (m/s)
+            - rho: Fluid density (kg/m^3)
+            - velocity: Velocity in fluid (m/s)
             - alpha: Angle of attack (radians)
             - beta: Sideslip angle (radians)
             - ang_vel: Angular velocities (rad/s) in 'p', 'q', and 'r' (roll, pitch, yaw rates)
@@ -156,8 +170,8 @@ class AircraftAerodynamics:
         q = 0.5 * rho * velocity ** 2  # Dynamic pressure
 
         # Translational forces:
-        C_L = self.coeffs.C_L(alpha+ angle_of_key)
-        C_D = self.coeffs.C_D(alpha+angle_of_key)
+        C_L = self.coeffs.C_L(alpha)
+        C_D = self.coeffs.C_D(alpha)
         C_Y = self.coeffs.C_Y_beta * beta
 
         F_x = -q * self.S * C_D  # Drag force
@@ -166,7 +180,7 @@ class AircraftAerodynamics:
 
         # Rotational contributions (moments):
         C_l = self.coeffs.C_l_beta * beta + self.coeffs.C_l_aileron * control_surfaces.get("aileron", 0.0)
-        C_m = self.coeffs.C_m_alpha * (alpha+angle_of_key) + self.coeffs.C_m_q * self.c / (2 * velocity) * ang_vel["q"]
+        C_m = self.coeffs.C_m_alpha * (alpha) + self.coeffs.C_m_q * self.c / (2 * velocity) * ang_vel["q"]
         C_n = self.coeffs.C_n_beta * beta + self.coeffs.C_n_rudder * control_surfaces.get("rudder", 0.0)
 
         # Moments (torques) in body axes:
