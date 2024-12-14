@@ -8,26 +8,27 @@ import numpy as np
 from aerodynamic_forces_model_6dof import AeroCoefficients, AircraftAerodynamics
 from compute_alpha_beta import compute_alpha_beta
 
-rho = 1
 class KiteSystem:
     def __init__(self, mbs, attachment_body, anchor_point: list[float], line_length: float, line_diameter:float, line_density: float,
                  kite_chord: float, kite_span: float, kite_mass: float, angle_of_key: float,
-                 wind_velocity: np.ndarray, magnifying_factor: float = 30, gravity: list[float] = [0, 0, 9.81]):
+                 wind_velocity: np.ndarray, fluid_volumetric_mass: float, magnifying_factor: float = 30, gravity: list[float] = [0, 0, 9.81]):
         """
         Initialize the kite system.
 
         Args:
             mbs: Multi-body system instance.
-            anchor_point: Anchor point of the kite line.
-            line_length: Length of the kite line.
-            line_density: Density of the kite line material.
-            kite_chord: Chord length of the kite.
-            kite_span: Span of the kite.
-            kite_mass: Mass of the kite.
-            angle_of_key: Initial angle of the kite in radians.
-            wind_velocity: Wind velocity vector in world frame.
-            magnifying_factor: Factor for visual scaling.
-            gravity: Gravity vector in world frame.
+            attachment_body: body to which line is attached
+            anchor_point: Anchor point of the kite line [3x1] [m]
+            line_length: Length of the kite line [m]
+            line_density: Density of the kite line material [kg/m3]
+            kite_chord: Chord length of the kite [m]
+            kite_span: Span of the kite [m]
+            kite_mass: Mass of the kite [kg]
+            angle_of_key: Initial angle of the kite [radians]
+            wind_velocity: Wind velocity vector in world frame [3x1] [m/s]
+            fluid_volumetric_mass: volumetric mass of fluid [kg/m3]
+            magnifying_factor: Factor for visual scaling [-]
+            gravity: Gravity vector in world frame [m/s2]
         """
         self.mbs = mbs
         self.attachment_body = attachment_body
@@ -40,6 +41,7 @@ class KiteSystem:
         self.kite_mass = kite_mass
         self.angle_of_key = angle_of_key
         self.wind_velocity = wind_velocity
+        self.fluid_volumetric_mass=fluid_volumetric_mass
         self.magnifying_factor = magnifying_factor
         self.gravity = gravity
 
@@ -178,8 +180,10 @@ class KiteSystem:
             angular_velocities = {"p": angular_velocity[0], "q": angular_velocity[1], "r": angular_velocity[2]}  # rad/s
             control_inputs = {"aileron": 0.0, "rudder": 0.0}  # rad
 
+
+
             # Compute forces and moments
-            forces_moments = aero_model.compute_forces_and_moments(rho=rho,
+            forces_moments = aero_model.compute_forces_and_moments(rho=self.fluid_volumetric_mass,
                                                                    velocity=np.linalg.norm(body_fluid_velocity_in_world,
                                                                                            2),
                                                                    alpha=alpha,

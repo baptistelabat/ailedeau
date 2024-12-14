@@ -41,6 +41,7 @@ kite1 = KiteSystem(
     kite_chord=2,
     kite_span=5,
     kite_mass=5,
+    fluid_volumetric_mass=1.2,
     angle_of_key=-np.radians(10),
     wind_velocity=np.array([-20, 0, 0])
 )
@@ -56,6 +57,7 @@ kite2 = KiteSystem(
     kite_chord=2,
     kite_span=5,
     kite_mass=5,
+    fluid_volumetric_mass=1.2,
     angle_of_key=-np.radians(10),
     wind_velocity=np.array([-20, 0, 0])
 )
