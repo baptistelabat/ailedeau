@@ -274,7 +274,7 @@ class KiteSystem:
             drag_coefficient = 0.5
             area = self.line_diameter * self.line_length  # Approximate frontal area
 
-            force = -0.5 * rho * area * drag_coefficient * np.linalg.norm(body_fluid_velocity, 2) * body_fluid_velocity
+            force = -0.5 * self.fluid_volumetric_mass * area * drag_coefficient * np.linalg.norm(body_fluid_velocity, 2) * body_fluid_velocity
             return force
 
         # Add aerodynamic torques to the kite
