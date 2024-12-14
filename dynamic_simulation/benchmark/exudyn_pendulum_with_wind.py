@@ -77,7 +77,7 @@ mbs.CreateForce(
 
 # position sensor at tip of body1
 sens1 = mbs.AddSensor(SensorBody(bodyNumber=b0, localPosition=[0.5*L, 0, 0],
-                                 fileName='solution/sensorPos.txt',
+                                 fileName='../solution/sensorPos.txt',
                                  outputVariableType=exu.OutputVariableType.Position))
 
 # %%++++++++++++++++++++++++++++++++++++++++++++++++++++++
