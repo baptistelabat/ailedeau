@@ -20,6 +20,7 @@ class KiteSystem:
                  angle_of_key: float,
                  wind_velocity: np.ndarray,
                  fluid_volumetric_mass: float,
+                 kite_thickness: float=0.0001,
                  magnifying_factor: float = 30,
                  gravity: list[float] = [0, 0, 9.81],
                  great_roll_offset_deg: float = 0,
@@ -35,6 +36,7 @@ class KiteSystem:
             line_density: Density of the kite line material [kg/m3]
             kite_chord: Chord length of the kite [m]
             kite_span: Span of the kite [m]
+            kite_thickness: thickness of kite [m]
             kite_mass: Mass of the kite [kg]
             angle_of_key: Initial angle of the kite [radians]
             wind_velocity: Wind velocity vector in world frame [3x1] [m/s]
@@ -52,6 +54,7 @@ class KiteSystem:
         self.line_density = line_density
         self.kite_chord = kite_chord
         self.kite_span = kite_span
+        self.kite_thickness = kite_thickness
         self.kite_mass = kite_mass
         self.angle_of_key = angle_of_key
         self.wind_velocity = wind_velocity
@@ -103,9 +106,8 @@ class KiteSystem:
             None
         """
         # Kite body properties
-        thickness = 0.0001
-        kite_density = self.kite_mass / (self.kite_chord * self.kite_span * thickness)
-        kite_dim = [self.kite_chord, self.kite_span, thickness]
+        kite_density = self.kite_mass / (self.kite_chord * self.kite_span * self.kite_thickness)
+        kite_dim = [self.kite_chord, self.kite_span, self.kite_thickness]
 
         i_cube_kite = InertiaCuboid(density=kite_density, sideLengths=kite_dim)
 
