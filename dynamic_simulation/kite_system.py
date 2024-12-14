@@ -10,7 +10,7 @@ from compute_alpha_beta import compute_alpha_beta
 
 rho = 1
 class KiteSystem:
-    def __init__(self, mbs, anchor_point: list[float], line_length: float, line_diameter:float, line_density: float,
+    def __init__(self, mbs, attachment_body, anchor_point: list[float], line_length: float, line_diameter:float, line_density: float,
                  kite_chord: float, kite_span: float, kite_mass: float, angle_of_key: float,
                  wind_velocity: np.ndarray, magnifying_factor: float = 30, gravity: list[float] = [0, 0, 9.81]):
         """
@@ -30,6 +30,7 @@ class KiteSystem:
             gravity: Gravity vector in world frame.
         """
         self.mbs = mbs
+        self.attachment_body = attachment_body
         self.anchor_point = anchor_point
         self.line_length = line_length
         self.line_diameter = line_diameter
@@ -113,7 +114,7 @@ class KiteSystem:
         """
         # Attach line to the ground
         self.mbs.CreateSphericalJoint(
-            bodyNumbers=[self.mbs.CreateGround(referencePosition=self.anchor_point), self.line_body],
+            bodyNumbers=[self.attachment_body, self.line_body],
             position=self.anchor_point
         )
 

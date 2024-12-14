@@ -27,10 +27,14 @@ CONSTRAIN_TO_2D = False
 SC = exu.SystemContainer()
 mbs = SC.AddSystem()
 
+anchor_point=[0, 0, 0]
+attachment_body = mbs.CreateGround(referencePosition=anchor_point)
+
 # Kite 1
 kite1 = KiteSystem(
     mbs,
-    anchor_point=[0, 0, 0],
+    attachment_body=attachment_body,
+    anchor_point = anchor_point,
     line_length=24,
     line_density=5000,
     line_diameter=0.001,
@@ -44,6 +48,7 @@ kite1 = KiteSystem(
 # Kite 2
 kite2 = KiteSystem(
     mbs,
+    attachment_body=attachment_body,
     anchor_point=[10, 0, 0],
     line_length=24,
     line_diameter = 0.001,
