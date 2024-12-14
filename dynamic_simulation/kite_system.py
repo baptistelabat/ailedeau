@@ -10,8 +10,8 @@ from compute_alpha_beta import compute_alpha_beta
 
 rho = 1
 class KiteSystem:
-    def __init__(self, mbs, anchor_point: list[float], line_length: float, line_density: float,
-                 kite_chord: float, kite_span: float, kite_mass: float, angle_of_kite: float,
+    def __init__(self, mbs, anchor_point: list[float], line_length: float, line_diameter:float, line_density: float,
+                 kite_chord: float, kite_span: float, kite_mass: float, angle_of_key: float,
                  wind_velocity: np.ndarray, magnifying_factor: float = 30, gravity: list[float] = [0, 0, 9.81]):
         """
         Initialize the kite system.
@@ -24,7 +24,7 @@ class KiteSystem:
             kite_chord: Chord length of the kite.
             kite_span: Span of the kite.
             kite_mass: Mass of the kite.
-            angle_of_kite: Initial angle of the kite in radians.
+            angle_of_key: Initial angle of the kite in radians.
             wind_velocity: Wind velocity vector in world frame.
             magnifying_factor: Factor for visual scaling.
             gravity: Gravity vector in world frame.
@@ -32,25 +32,30 @@ class KiteSystem:
         self.mbs = mbs
         self.anchor_point = anchor_point
         self.line_length = line_length
+        self.line_diameter = line_diameter
         self.line_density = line_density
         self.kite_chord = kite_chord
         self.kite_span = kite_span
         self.kite_mass = kite_mass
-        self.angle_of_kite = angle_of_kite
+        self.angle_of_key = angle_of_key
         self.wind_velocity = wind_velocity
         self.magnifying_factor = magnifying_factor
         self.gravity = gravity
-
-        self.line_diameter = 0.001
 
         self.create_line()
         self.create_kite()
         self.create_joints()
         self.add_forces()
 
-    def create_line(self):
+    def create_line(self) -> None:
+        """
+        Create line as rigid body
+
+        Returns:
+            None
+        """
         # Line body properties
-        self.line_mass = self.line_length * self.line_diameter ** 2 * self.line_density
+        self.line_mass = np.pi/4*self.line_length * self.line_diameter ** 2 * self.line_density
         body_dim = [self.line_diameter, self.line_diameter, self.line_length]
         self.mid_line_point = self.anchor_point + np.array([0, 0, self.line_length * -0.5])
 
@@ -70,7 +75,13 @@ class KiteSystem:
             graphicsDataList=[graphics_com0, graphics_body0]
         )
 
-    def create_kite(self):
+    def create_kite(self)->None:
+        """
+        Create kite as rigid body
+
+        Returns:
+            None
+        """
         # Kite body properties
         thickness = 0.0001
         kite_density = self.kite_mass / (self.kite_chord * self.kite_span * thickness)
@@ -87,13 +98,19 @@ class KiteSystem:
 
         self.kite_body = self.mbs.CreateRigidBody(
             inertia=i_cube_kite,
-            referencePosition=self.anchor_point + np.array([0, 0, -self.line_length]),
-            referenceRotationMatrix=RotXYZ2RotationMatrix([0, self.angle_of_kite, 0]),
+            referencePosition=self.anchor_point + np.array([0, 0, -self.line_length]), # Kite up
+            referenceRotationMatrix=RotXYZ2RotationMatrix([0, self.angle_of_key, 0]),
             gravity=self.gravity,
             graphicsDataList=[graphics_com_kite, graphics_kite]
         )
 
-    def create_joints(self):
+    def create_joints(self) -> None:
+        """
+        Create joints between body
+
+        Returns:
+            None
+        """
         # Attach line to the ground
         self.mbs.CreateSphericalJoint(
             bodyNumbers=[self.mbs.CreateGround(referencePosition=self.anchor_point), self.line_body],
@@ -106,7 +123,13 @@ class KiteSystem:
             position=[0, 0, -self.line_length]
         )
 
-    def add_forces(self):
+    def add_forces(self) -> None:
+        """
+        Add forces and torques to bodies
+
+        Returns:
+            None
+        """
         def wind_wrench(mbs, t: float, loadVector) -> Tuple[np.array, np.array]:
             """
             Compute the aerodynamic force wrench
@@ -177,7 +200,8 @@ class KiteSystem:
 
         def wind_wrench_force_wrapper(mbs, t: float, loadVector: np.ndarray) -> np.ndarray:
             """
-            Wrapper function to apply aerodynamic forces and torques via wind_wrench.
+            Wrapper function to apply aerodynamic forces via wind_wrench.
+
             Args:
                 mbs: Multi-body system instance.
                 t: Current time in the simulation.
@@ -192,7 +216,8 @@ class KiteSystem:
 
         def wind_wrench_torque_wrapper(mbs, t: float, loadVector: np.ndarray) -> np.ndarray:
             """
-            Wrapper function to apply aerodynamic forces and torques via wind_wrench.
+            Wrapper function to apply aerodynamic torque via wind_wrench.
+
             Args:
                 mbs: Multi-body system instance.
                 t: Current time in the simulation.
