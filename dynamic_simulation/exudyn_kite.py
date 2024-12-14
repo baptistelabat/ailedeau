@@ -20,7 +20,6 @@ from exudyn.rigidBodyUtilities import RotXYZ2RotationMatrix
 
 from dynamic_simulation.kite_system import KiteSystem
 
-CONSTRAIN_TO_2D = False
 # Example usage with visualization and rendering:
 
 # Initialize Exudyn system
