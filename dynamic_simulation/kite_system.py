@@ -22,7 +22,8 @@ class KiteSystem:
                  fluid_volumetric_mass: float,
                  magnifying_factor: float = 30,
                  gravity: list[float] = [0, 0, 9.81],
-                 great_roll_offset_deg: float = 0):
+                 great_roll_offset_deg: float = 0,
+                 constrain_to_2d:bool = False):
         """
         Initialize the kite system.
 
@@ -41,6 +42,7 @@ class KiteSystem:
             magnifying_factor: Factor for visual scaling [-]
             gravity: Gravity vector in world frame [m/s2]
             great_roll_offset_deg: 0° for kite at zenith, 180° for foil at nadir
+            constrain_to_2d: limit to 2D plan motion
         """
         self.mbs = mbs
         self.attachment_body = attachment_body
@@ -57,6 +59,7 @@ class KiteSystem:
         self.magnifying_factor = magnifying_factor
         self.gravity = gravity
         self.great_roll_offset=np.radians(great_roll_offset_deg)
+        self.constrain_to_2d = constrain_to_2d
 
         self.create_line()
         self.create_kite()
@@ -128,11 +131,18 @@ class KiteSystem:
         Returns:
             None
         """
-        # Attach line to the ground
-        self.mbs.CreateSphericalJoint(
-            bodyNumbers=[self.attachment_body, self.line_body],
-            position=self.anchor_point
-        )
+        #### Create joints ##########
+        if self.constrain_to_2d:
+            y_axis = [0, np.cos(self.great_roll_offset), np.sin(self.great_roll_offset)]
+            self.mbs.CreateRevoluteJoint(bodyNumbers=[self.attachment_body, self.line_body], position=self.anchor_point,
+                                    axis=y_axis, axisRadius=0.2 * self.magnifying_factor * self.line_diameter,
+                                    axisLength=1.4 * self.magnifying_factor * self.line_diameter)
+        else:
+            # Attach line to the ground
+            self.mbs.CreateSphericalJoint(
+                bodyNumbers=[self.attachment_body, self.line_body],
+                position=self.anchor_point
+            )
 
         # Attach kite to the line
         self.mbs.CreateGenericJoint(
