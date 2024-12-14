@@ -43,7 +43,7 @@ kite1 = KiteSystem(
     kite_mass=5,
     fluid_volumetric_mass=1.2,
     angle_of_key=-np.radians(10),
-    wind_velocity=np.array([-20, 0, 0])
+    wind_velocity=np.array([-20, 0, 0]),
 )
 
 # Kite 2
@@ -59,7 +59,8 @@ kite2 = KiteSystem(
     kite_mass=5,
     fluid_volumetric_mass=1.2,
     angle_of_key=-np.radians(10),
-    wind_velocity=np.array([-20, 0, 0])
+    wind_velocity=np.array([-20, 0, 0]),
+    great_roll_offset_deg=90,
 )
 
 # Assembly and simulation setup
@@ -68,7 +69,7 @@ mbs.Assemble()
 # Simulation settings
 simulationSettings = exu.SimulationSettings()
 simulationSettings.timeIntegration.numberOfSteps = 1000
-simulationSettings.timeIntegration.endTime = 10.0
+simulationSettings.timeIntegration.endTime = 30.0
 simulationSettings.timeIntegration.verboseMode = 1
 simulationSettings.solutionSettings.solutionWritePeriod = 0.01
 
