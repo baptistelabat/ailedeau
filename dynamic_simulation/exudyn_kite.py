@@ -61,7 +61,7 @@ kite2 = KiteSystem(
     angle_of_key=-np.radians(10),
     wind_velocity=np.array([-20, 0, 0]),
     great_roll_offset_deg=90,
-    constrain_to_2d = True
+    constrain_to_2d = False
 )
 
 # Assembly and simulation setup
