@@ -169,33 +169,46 @@ class AircraftAerodynamics:
         """
         q = 0.5 * rho * velocity ** 2  # Dynamic pressure
 
-        # Translational forces:
-        C_L = self.coeffs.C_L(alpha)
-        C_D = self.coeffs.C_D(alpha)
-        C_Y = self.coeffs.C_Y_beta * beta
+        if q==0:
 
-        F_x = -q * self.S * C_D  # Drag force
-        F_y = q * self.S * C_Y  # Side force
-        F_z = -q * self.S * C_L  # Lift force
+            return {
+                "F_x": 0,
+                "F_y": 0,
+                "F_z": 0,
+                "M_x": 0,
+                "M_y": 0,
+                "M_z": 0
+            }
+        else:
 
-        # Rotational contributions (moments):
-        C_l = self.coeffs.C_l_beta * beta + self.coeffs.C_l_aileron * control_surfaces.get("aileron", 0.0)
-        C_m = self.coeffs.C_m_alpha * (alpha) + self.coeffs.C_m_q * self.c / (2 * velocity) * ang_vel["q"]
-        C_n = self.coeffs.C_n_beta * beta + self.coeffs.C_n_rudder * control_surfaces.get("rudder", 0.0)
 
-        # Moments (torques) in body axes:
-        M_x = q * self.S * self.b * C_l  # Rolling moment
-        M_y = q * self.S * self.c * C_m  # Pitching moment
-        M_z = q * self.S * self.b * C_n  # Yawing moment
+            # Translational forces:
+            C_L = self.coeffs.C_L(alpha)
+            C_D = self.coeffs.C_D(alpha)
+            C_Y = self.coeffs.C_Y_beta * beta
 
-        return {
-            "F_x": F_x,
-            "F_y": F_y,
-            "F_z": F_z,
-            "M_x": M_x,
-            "M_y": M_y,
-            "M_z": M_z
-        }
+            F_x = -q * self.S * C_D  # Drag force
+            F_y = q * self.S * C_Y  # Side force
+            F_z = -q * self.S * C_L  # Lift force
+
+            # Rotational contributions (moments):
+            C_l = self.coeffs.C_l_beta * beta + self.coeffs.C_l_aileron * control_surfaces.get("aileron", 0.0)
+            C_m = self.coeffs.C_m_alpha * (alpha) + self.coeffs.C_m_q * self.c / (2 * velocity) * ang_vel["q"]
+            C_n = self.coeffs.C_n_beta * beta + self.coeffs.C_n_rudder * control_surfaces.get("rudder", 0.0)
+
+            # Moments (torques) in body axes:
+            M_x = q * self.S * self.b * C_l  # Rolling moment
+            M_y = q * self.S * self.c * C_m  # Pitching moment
+            M_z = q * self.S * self.b * C_n  # Yawing moment
+
+            return {
+                "F_x": F_x,
+                "F_y": F_y,
+                "F_z": F_z,
+                "M_x": M_x,
+                "M_y": M_y,
+                "M_z": M_z
+            }
 
 
 # Example usage
