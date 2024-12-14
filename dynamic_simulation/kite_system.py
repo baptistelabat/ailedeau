@@ -9,9 +9,20 @@ from aerodynamic_forces_model_6dof import AeroCoefficients, AircraftAerodynamics
 from compute_alpha_beta import compute_alpha_beta
 
 class KiteSystem:
-    def __init__(self, mbs, attachment_body, anchor_point: list[float], line_length: float, line_diameter:float, line_density: float,
-                 kite_chord: float, kite_span: float, kite_mass: float, angle_of_key: float,
-                 wind_velocity: np.ndarray, fluid_volumetric_mass: float, magnifying_factor: float = 30, gravity: list[float] = [0, 0, 9.81]):
+    def __init__(self, mbs, attachment_body,
+                 anchor_point: list[float],
+                 line_length: float,
+                 line_diameter:float,
+                 line_density: float,
+                 kite_chord: float,
+                 kite_span: float,
+                 kite_mass: float,
+                 angle_of_key: float,
+                 wind_velocity: np.ndarray,
+                 fluid_volumetric_mass: float,
+                 magnifying_factor: float = 30,
+                 gravity: list[float] = [0, 0, 9.81],
+                 great_roll_offset_deg: float = 0):
         """
         Initialize the kite system.
 
@@ -29,6 +40,7 @@ class KiteSystem:
             fluid_volumetric_mass: volumetric mass of fluid [kg/m3]
             magnifying_factor: Factor for visual scaling [-]
             gravity: Gravity vector in world frame [m/s2]
+            great_roll_offset_deg: 0° for kite at zenith, 180° for foil at nadir
         """
         self.mbs = mbs
         self.attachment_body = attachment_body
@@ -44,6 +56,7 @@ class KiteSystem:
         self.fluid_volumetric_mass=fluid_volumetric_mass
         self.magnifying_factor = magnifying_factor
         self.gravity = gravity
+        self.great_roll_offset=np.radians(great_roll_offset_deg)
 
         self.create_line()
         self.create_kite()
@@ -60,7 +73,7 @@ class KiteSystem:
         # Line body properties
         self.line_mass = np.pi/4*self.line_length * self.line_diameter ** 2 * self.line_density
         body_dim = [self.line_diameter, self.line_diameter, self.line_length]
-        self.mid_line_point = self.anchor_point + np.array([0, 0, self.line_length * -0.5])
+        self.mid_line_point = self.anchor_point + np.array([0, self.line_length * -0.5*np.sin(self.great_roll_offset), self.line_length * -0.5*np.cos(self.great_roll_offset)])
 
         i_cube0 = InertiaCuboid(density=self.line_density, sideLengths=body_dim)#.Translated(mid_line_point)
 
@@ -74,6 +87,7 @@ class KiteSystem:
         self.line_body = self.mbs.CreateRigidBody(
             inertia=i_cube0,
             referencePosition=self.mid_line_point,
+            referenceRotationMatrix=RotXYZ2RotationMatrix([-self.great_roll_offset, 0, 0]),
             gravity=self.gravity,
             graphicsDataList=[graphics_com0, graphics_body0]
         )
@@ -101,8 +115,8 @@ class KiteSystem:
 
         self.kite_body = self.mbs.CreateRigidBody(
             inertia=i_cube_kite,
-            referencePosition=self.anchor_point + np.array([0, 0, -self.line_length]), # Kite up
-            referenceRotationMatrix=RotXYZ2RotationMatrix([0, self.angle_of_key, 0]),
+            referencePosition=self.anchor_point + np.array([0, -self.line_length *np.sin(self.great_roll_offset), -self.line_length *np.cos(self.great_roll_offset)]), # Kite up
+            referenceRotationMatrix=RotXYZ2RotationMatrix([-self.great_roll_offset, self.angle_of_key, 0]),
             gravity=self.gravity,
             graphicsDataList=[graphics_com_kite, graphics_kite]
         )
