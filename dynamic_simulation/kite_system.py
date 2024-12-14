@@ -184,7 +184,7 @@ class KiteSystem:
                                          [3, 3])
 
             # Get angular velocity, which play an important role in damping motion
-            angular_velocity = mbs.GetObjectOutputBody(1, localPosition=[0, 0, 0],
+            angular_velocity = mbs.GetObjectOutputBody(self.kite_body, localPosition=[0, 0, 0],
                                                        variableType=exu.OutputVariableType.AngularVelocityLocal)
 
             alpha, beta = compute_alpha_beta(R_wb=rotation_matrix.T, v_world=body_fluid_velocity_in_world)
