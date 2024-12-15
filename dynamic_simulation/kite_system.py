@@ -118,10 +118,12 @@ class KiteSystem:
         )
         graphics_com_kite = graphics.Basis(origin=[0,0,0], length=self.kite_span)
 
+        ground_fluid_incoming_direction = np.arctan2(-self.wind_velocity[1], -self.wind_velocity[0] )
+
         self.kite_body = self.mbs.CreateRigidBody(
             inertia=i_cube_kite,
             referencePosition=self.anchor_point + np.array([0, -self.line_length *np.sin(self.great_roll_offset), -self.line_length *np.cos(self.great_roll_offset)]), # Kite up
-            referenceRotationMatrix=RotXYZ2RotationMatrix([-self.great_roll_offset, self.angle_of_key, 0]),
+            referenceRotationMatrix=np.matmul(RotXYZ2RotationMatrix([0, 0, ground_fluid_incoming_direction]), RotXYZ2RotationMatrix([-self.great_roll_offset, self.angle_of_key, 0])),
             gravity=self.gravity,
             graphicsDataList=[graphics_com_kite, graphics_kite]
         )
