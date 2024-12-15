@@ -17,6 +17,7 @@ import exudyn as exu
 # from exudyn.utilities import * #includes itemInterface and rigidBodyUtilities
 import numpy as np
 from exudyn import graphics
+from exudyn.itemInterface import MarkerBodyRigid
 from exudyn.rigidBodyUtilities import RotXYZ2RotationMatrix, InertiaCuboid
 
 from dynamic_simulation.kite_system import KiteSystem
@@ -46,6 +47,8 @@ mbs.CreateGenericJoint(
     position=[0, 0, 0],
 constrainedAxes=[0, 1, 0, 1, 0, 1]
 )
+
+trackMarker = mbs.AddMarker(MarkerBodyRigid(bodyNumber=sphinx, localPosition=[0, 0, 0]))
 
 wind_velocity = np.array([-10, 0, -5])
 
@@ -123,6 +126,7 @@ SC.visualizationSettings.openGL.multiSampling = 4
 SC.visualizationSettings.openGL.initialModelRotation = RotXYZ2RotationMatrix([np.pi / 2, 0, np.pi])
 SC.visualizationSettings.openGL.initialZoom = 0.2
 SC.visualizationSettings.nodes.showBasis = True
+SC.visualizationSettings.interactive.trackMarker = trackMarker
 
 # Solve the dynamic simulation
 mbs.SolveDynamic(simulationSettings=simulationSettings)
