@@ -38,7 +38,14 @@ sphinx = mbs.CreateRigidBody(
     gravity=gravity,
     graphicsDataList=[]
 )
-attachment_body = sphinx# mbs.CreateGround(referencePosition=anchor_point)
+attachment_body = sphinx
+
+ground = mbs.CreateGround(referencePosition=anchor_point)
+mbs.CreateGenericJoint(
+    bodyNumbers=[ground, sphinx],
+    position=[0, 0, 0],
+constrainedAxes=[0, 1, 0, 1, 0, 1]
+)
 
 wind_velocity = np.array([-10, 0, -5])
 
@@ -106,7 +113,7 @@ mbs.Assemble()
 # Simulation settings
 simulationSettings = exu.SimulationSettings()
 simulationSettings.timeIntegration.numberOfSteps = 1000
-simulationSettings.timeIntegration.endTime = 6
+simulationSettings.timeIntegration.endTime = 30
 simulationSettings.timeIntegration.verboseMode = 1
 simulationSettings.solutionSettings.solutionWritePeriod = 0.01
 
