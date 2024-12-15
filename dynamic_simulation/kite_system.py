@@ -79,7 +79,7 @@ class KiteSystem:
         # Line body properties
         self.line_mass = np.pi/4*self.line_length * self.line_diameter ** 2 * self.line_density
         body_dim = [self.line_diameter, self.line_diameter, self.line_length]
-        self.mid_line_point = self.anchor_point + np.array([0, self.line_length * -0.5*np.sin(self.great_roll_offset), self.line_length * -0.5*np.cos(self.great_roll_offset)])
+        self.mid_line_point = self.anchor_point + np.array([0, -self.line_length * 0.5*np.sin(self.great_roll_offset), -self.line_length * 0.5*np.cos(self.great_roll_offset)])
 
         i_cube0 = InertiaCuboid(density=self.line_density, sideLengths=body_dim)#.Translated(mid_line_point)
 
@@ -151,7 +151,7 @@ class KiteSystem:
         # Attach kite to the line
         self.mbs.CreateGenericJoint(
             bodyNumbers=[self.line_body, self.kite_body],
-            position=[0, 0, -self.line_length]
+            position=[0, -self.line_length *np.sin(self.great_roll_offset), -self.line_length *np.cos(self.great_roll_offset)]
         )
 
     def add_forces(self) -> None:
