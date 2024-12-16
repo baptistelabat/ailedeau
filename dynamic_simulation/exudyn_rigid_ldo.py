@@ -17,7 +17,7 @@ import exudyn as exu
 # from exudyn.utilities import * #includes itemInterface and rigidBodyUtilities
 import numpy as np
 from exudyn import graphics
-from exudyn.itemInterface import MarkerBodyRigid
+from exudyn.itemInterface import MarkerBodyRigid, SensorBody, ObjectGround, VObjectGround
 from exudyn.rigidBodyUtilities import RotXYZ2RotationMatrix, InertiaCuboid
 
 from dynamic_simulation.kite_system import KiteSystem
@@ -50,27 +50,27 @@ constrainedAxes=[0, 1, 0, 1, 0, 1]
 
 trackMarker = mbs.AddMarker(MarkerBodyRigid(bodyNumber=sphinx, localPosition=[0, 0, 0]))
 
-wind_velocity = np.array([-10, 0, -5])
+wind_velocity = np.array([-10, 0, -2])
 
 # Create pod which is deemed to protect payload (passengers, control systems, ...)
-# pod = KiteSystem(
-#     mbs,
-#     attachment_body=attachment_body,
-#     anchor_point = anchor_point,
-#     line_length=0.1,
-#     line_density=5000,
-#     line_diameter=0.001,
-#     kite_chord=2,
-#     kite_span=1,
-#     kite_mass=200,
-#     kite_thickness=1, # Hack of kite thickness
-#     fluid_volumetric_mass=1.2,
-#     angle_of_key=-np.radians(0),
-#     wind_velocity=wind_velocity,
-#     great_roll_offset_deg=180,
-#     gravity=gravity,
-#     constrain_to_2d = True
-# )
+pod = KiteSystem(
+    mbs,
+    attachment_body=attachment_body,
+    anchor_point = anchor_point,
+    line_length=0.1,
+    line_density=5000,
+    line_diameter=0.001,
+    kite_chord=2,
+    kite_span=0.5,
+    kite_mass=200,
+    kite_thickness=0.5, # Hack of kite thickness
+    fluid_volumetric_mass=1.2,
+    angle_of_key=-np.radians(0),
+    wind_velocity=wind_velocity,
+    great_roll_offset_deg=180,
+    gravity=gravity,
+    constrain_to_2d = True
+)
 
 # Tethered foil
 tethered_foil = KiteSystem(
@@ -81,7 +81,7 @@ tethered_foil = KiteSystem(
     line_density=5000,
     line_diameter=0.001,
     kite_chord=0.1,
-    kite_span=0.4,
+    kite_span=0.8,
     kite_mass=0.5,
     fluid_volumetric_mass=1025,
     angle_of_key=-np.radians(10),
@@ -109,7 +109,15 @@ kite = KiteSystem(
     constrain_to_2d = True,
     gravity = gravity
 )
+sPos = mbs.AddSensor(SensorBody(bodyNumber=pod.kite_body, storeInternal=True,
+                                   outputVariableType=exu.OutputVariableType.Position))
+sRot = mbs.AddSensor(SensorBody(bodyNumber=pod.kite_body, storeInternal=True,
+                                   outputVariableType=exu.OutputVariableType.RotationMatrix))
 
+# Background
+background = graphics.CheckerBoard(point=[0, 0, -0.1], size=100, normal=[0,1,0])
+oGround = mbs.AddObject(ObjectGround(referencePosition=[0, 0, 0],
+                                     visualization=VObjectGround(graphicsData=[background])))
 # Assembly and simulation setup
 mbs.Assemble()
 
@@ -128,6 +136,17 @@ SC.visualizationSettings.openGL.initialZoom = 0.2
 SC.visualizationSettings.nodes.showBasis = True
 SC.visualizationSettings.interactive.trackMarker = trackMarker
 
+if True:
+    #traces:
+    SC.visualizationSettings.sensors.traces.listOfPositionSensors = [sPos]
+    SC.visualizationSettings.sensors.traces.listOfTriadSensors =[sRot]
+    SC.visualizationSettings.sensors.traces.showPositionTrace=True
+    SC.visualizationSettings.sensors.traces.showTriads=True
+    SC.visualizationSettings.sensors.traces.triadSize=2
+    SC.visualizationSettings.sensors.traces.showVectors=False
+    SC.visualizationSettings.sensors.traces.showFuture=False
+    SC.visualizationSettings.sensors.traces.triadsShowEvery=50
+
 # Solve the dynamic simulation
 mbs.SolveDynamic(simulationSettings=simulationSettings)
 
@@ -139,3 +158,5 @@ if True:  # Optional: Plot results
 
 if True:  # Draw system graph
     mbs.DrawSystemGraph(useItemTypes=True)
+
+
