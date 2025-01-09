@@ -28,10 +28,13 @@ A dynamic simulator is also developed.
 
 ## Install
 We use mamba/conda-lock/poetry to get a reproducible environment. The following command should install everything for you.
-make install-mamba
-make create-aildeau
-mamba activate ailedeau
+make install-micromamba
+make setup-env
 make install-poetry
+
+or 
+make install-uv
+make init-uv
 
 
 ## Developer guidelines
