@@ -35,7 +35,7 @@ setup-env: install-micromamba ## Create copy of environment
 	conda-lock install --name $(PROJECT) conda-lock.yml'
 
 install-poetry: ## Be sure to activate env
-	poetry install
+	poetry install --no-root
 
 install-uv: ## Install uv (Python virtual environment manager)
 	@if [ ! -x "$(UV_BIN)" ]; then \
