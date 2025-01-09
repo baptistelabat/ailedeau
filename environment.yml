@@ -2,8 +2,8 @@ name: ailedeau
 channels:
   - conda-forge
 dependencies:
-  - poetry=1.8.2
-  - python=3.12.3
+  - poetry=2.0.0
+  - python=3.10.16
 prefix: /home/perso/conda/envs/ailedeau
 
 # Non-standard section listing target platforms for conda-lock:
