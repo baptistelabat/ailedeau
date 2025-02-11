@@ -41,4 +41,22 @@ for speed_ratio in speed_ratios :
     force_ratios.append(P_over_M)
 
 plt.plot(speed_ratios, force_ratios)
+# plt.show()
+
+
+"""
+According to page 35 in AYRS 114
+"""
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
+for lift_over_drag in range(2, 10):
+    k = np.arctan(1/lift_over_drag)
+    v0 = 1
+    q = np.radians(np.arange(0,180))
+    va=np.sqrt(v0**2*np.cos(k)*np.sin(q)/((np.sin(q)**2-np.sin(k)**2)**(1/2) -np.tan(y)*np.sin(k)))
+    ax.plot(q, va)
+ax.grid(True)
+
+ax.set_title("A line plot on a polar axis", va='bottom')
 plt.show()
+
