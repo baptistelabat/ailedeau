@@ -18,7 +18,7 @@ import exudyn as exu
 import numpy as np
 from exudyn.rigidBodyUtilities import RotXYZ2RotationMatrix
 
-from src.dynamic_simulation.kite_system import KiteSystem
+from dynamic_simulation.kite_system import KiteSystem
 
 # Example usage with visualization and rendering:
 
