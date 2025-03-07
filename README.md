@@ -37,11 +37,7 @@ To install the required dependencies, follow the steps below:
    ```bash
    cd ailedeau
    make install-uv
+  
+   sudo apt-get install -y libxcb-cursor-dev
+
    ```
-
----
-
-
-
-
-
