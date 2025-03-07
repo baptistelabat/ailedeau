@@ -1,6 +1,6 @@
 import numpy as np
 
-from compute_alpha_beta import compute_alpha_beta, alpha_beta
+from src.compute_alpha_beta import compute_alpha_beta, alpha_beta
 import pytest
 
 def test_alpha_beta():
