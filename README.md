@@ -23,14 +23,24 @@ Unfortunately, there are little details on the derivation of some formula in the
 The goal is to get to a live version of the simulator than can be used in a web browser.
 
 
-Install
-We use mamba/conda-lock/poetry to get a reproducible environment. The following command should install everything for you:
+## 🛠️ Installation
+You can download the code directly from GitHub or using git:
+
 ```bash
-make install-mamba  
-make create-ailedeau  
-mamba activate ailedeau  
-make install-poetry
+git clone git@github.com:baptistelabat/ailedeau.git
 ```
+
+To install the required dependencies, follow the steps below:
+
+1. Install `uv` by following the official [installation guide](https://docs.astral.sh/uv/getting-started/installation).
+2. Alternatively, run the command from root of repository:  
+   ```bash
+   cd ailedeau
+   make install-uv
+   ```
+
+---
+
 
 
 
