@@ -5,11 +5,18 @@ description = "Simulation, design and control of l'aile d'eau"
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
 dependencies = [
+    "exudyn>=1.9.0",
     "geomdl==5.3.1",
     "matplotlib>=3.10.0",
+    "mujoco>=3.3.0",
+    "mujoco-python-viewer>=0.1.4",
+    "networkx>=3.4.2",
     "numpy",
+    "pybullet>=3.2.7",
     "pyqt6>=6.8.0",
     "scipy==1.14",
+    "sympy>=1.13.3",
+    "toml>=0.10.2",
 ]
 
 [dependency-groups]
@@ -19,6 +26,5 @@ dev = [
     "pytest>=8.3.4",
     "ruff>=0.9.3",
 ]
-
-[tool.uv.workspace]
-members = ["packages/*"]
+[tool.uv]
+package = true
