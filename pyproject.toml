@@ -16,6 +16,7 @@ dependencies = [
     "pyqt6>=6.8.0",
     "scipy==1.14",
     "sympy>=1.13.3",
+    "toml>=0.10.2",
 ]
 
 [dependency-groups]

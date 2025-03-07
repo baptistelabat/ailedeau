@@ -43,3 +43,7 @@ To install the required dependencies, follow the steps below:
    sudo apt-get install -y libxcb-cursor-dev
 
    ```
+## Developer guidelines
+Google docstring are used
+Please use typing
+Please try to get a maximal code coverage, first by deleting unused code
