@@ -19,6 +19,13 @@
     },
     "units" : "English",
     "scene" : {
+        "surface_effect_conditions":{
+            "has_free_surface": true,
+            "surface_plane_normal": [0,0,1],
+            "point_on_surface": [0,0,10],
+            "biplane_BC":  true,
+            "wave_corrections": false
+        },
         "atmosphere" : {},
         "aircraft" : {
             "traditional_airplane" : {
