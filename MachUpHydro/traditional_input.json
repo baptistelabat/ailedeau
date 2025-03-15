@@ -17,7 +17,7 @@
         "convergence" : 1e-10,
         "relaxation" : 0.9
     },
-    "units" : "English",
+    "units" : "SIs",
     "scene" : {
         "surface_effect_conditions":{
             "has_free_surface": true,
@@ -26,12 +26,13 @@
             "biplane_BC":  true,
             "wave_corrections": false
         },
-        "atmosphere" : {},
+        "atmosphere" : {"rho": 1025,
+                        "viscosity": 1e-6},
         "aircraft" : {
             "traditional_airplane" : {
                 "file" : "traditional_airplane.json",
                 "state" : {
-                    "velocity" : 100,
+                    "velocity" : 10,
                     "alpha" : 2.0,
                     "beta" : 0.0
                 },
