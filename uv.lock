@@ -15,8 +15,10 @@ name = "ailedeau"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "airfoil-db" },
     { name = "exudyn" },
     { name = "geomdl" },
+    { name = "machupx" },
     { name = "matplotlib" },
     { name = "mujoco" },
     { name = "mujoco-python-viewer" },
@@ -38,8 +40,10 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "airfoil-db", directory = "../AirfoilDatabase" },
     { name = "exudyn", specifier = ">=1.9.0" },
     { name = "geomdl", specifier = "==5.3.1" },
+    { name = "machupx", directory = "../MachUpHydro" },
     { name = "matplotlib", specifier = ">=3.10.0" },
     { name = "mujoco", specifier = ">=3.3.0" },
     { name = "mujoco-python-viewer", specifier = ">=0.1.4" },
@@ -57,6 +61,23 @@ dev = [
     { name = "pre-commit", specifier = ">=4.1.0" },
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "ruff", specifier = ">=0.9.3" },
+]
+
+[[package]]
+name = "airfoil-db"
+version = "1.4.3"
+source = { directory = "../AirfoilDatabase" }
+dependencies = [
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "scipy" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "scipy" },
 ]
 
 [[package]]
@@ -403,6 +424,29 @@ wheels = [
 ]
 
 [[package]]
+name = "machupx"
+version = "2.7.2"
+source = { directory = "../MachUpHydro" }
+dependencies = [
+    { name = "airfoil-db" },
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "numpy-stl" },
+    { name = "pytest" },
+    { name = "scipy" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "airfoil-db", specifier = ">=1.4.3" },
+    { name = "matplotlib" },
+    { name = "numpy", specifier = ">=1.18" },
+    { name = "numpy-stl" },
+    { name = "pytest" },
+    { name = "scipy", specifier = ">=1.4" },
+]
+
+[[package]]
 name = "matplotlib"
 version = "3.10.1"
 source = { registry = "https://pypi.org/simple" }
@@ -554,6 +598,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/29/e8/5da32ffcaa7a72f7ecd82f90c062140a061eb823cb88e90279424e515cf4/numpy-2.2.3-pp310-pypy310_pp73-macosx_14_0_x86_64.whl", hash = "sha256:ed2cf9ed4e8ebc3b754d398cba12f24359f018b416c380f577bbae112ca52fc9", size = 6809418 },
     { url = "https://files.pythonhosted.org/packages/a8/a9/68aa7076c7656a7308a0f73d0a2ced8c03f282c9fd98fa7ce21c12634087/numpy-2.2.3-pp310-pypy310_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:39261798d208c3095ae4f7bc8eaeb3481ea8c6e03dc48028057d3cbdbdb8937e", size = 16215461 },
     { url = "https://files.pythonhosted.org/packages/17/7f/d322a4125405920401450118dbdc52e0384026bd669939484670ce8b2ab9/numpy-2.2.3-pp310-pypy310_pp73-win_amd64.whl", hash = "sha256:783145835458e60fa97afac25d511d00a1eca94d4a8f3ace9fe2043003c678e4", size = 12839607 },
+]
+
+[[package]]
+name = "numpy-stl"
+version = "3.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "python-utils" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/cb/80/96366d1b69223d4ca55fca30f158096df169b00aa6b4dd963025980e7ede/numpy_stl-3.2.0.tar.gz", hash = "sha256:5a20c3f79cddaa0abc6a4b99f5486aceed4f88152f29b19a57acc844e183fd4d", size = 824382 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ea/2c/e17b8814050427929077639d35a42187a006922600d4840475bdc5f64ebb/numpy_stl-3.2.0-py3-none-any.whl", hash = "sha256:697c81b107231362460aaedf4647e81ba54f54f59c896772fea7904c9c439da5", size = 20775 },
 ]
 
 [[package]]
@@ -744,6 +801,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/66/c0/0c8b6ad9f17a802ee498c46e004a0eb49bc148f2fd230864601a86dcf6db/python-dateutil-2.9.0.post0.tar.gz", hash = "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3", size = 342432 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427", size = 229892 },
+]
+
+[[package]]
+name = "python-utils"
+version = "3.9.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/13/4c/ef8b7b1046d65c1f18ca31e5235c7d6627ca2b3f389ab1d44a74d22f5cc9/python_utils-3.9.1.tar.gz", hash = "sha256:eb574b4292415eb230f094cbf50ab5ef36e3579b8f09e9f2ba74af70891449a0", size = 35403 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d4/69/31c82567719b34d8f6b41077732589104883771d182a9f4ff3e71430999a/python_utils-3.9.1-py2.py3-none-any.whl", hash = "sha256:0273d7363c7ad4b70999b2791d5ba6b55333d6f7a4e4c8b6b39fb82b5fab4613", size = 32078 },
 ]
 
 [[package]]
